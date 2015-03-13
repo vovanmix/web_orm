@@ -41,11 +41,6 @@ class ormPDOClass
 	public $debug = false;
 	public $print_errors = true;
 	public $fictive = false;
-	public $NewLink = true;
-
-	protected $tableModels = [];
-
-	protected static $_cache = array();
 
 	public function __construct($config)
 	{
