@@ -57,15 +57,6 @@ class ormPDOClass
 		if (empty($this->config['host']))
 			$this->config['host'] = 'localhost';
 
-//		if (empty($this->config['modelsDirectory']))
-//			$this->config['modelsDirectory'] = __DIR__;
-//
-//		if (empty($this->config['cacheDirectory']))
-//			$this->config['cacheDirectory'] = __DIR__ . '/cache';
-
-//		if (empty($this->config['socket']))
-//			$this->config['socket'] = '/tmp/mysql.sock';
-
 		$this->connect();
 		$this->execute("SET NAMES '" . $this->config['charset'] . "'");
 	}
@@ -73,7 +64,6 @@ class ormPDOClass
 	private function connect()
 	{
 		try {
-//			$connectionString = 'mysql:unix_socket=' . $this->config['socket'] . ';dbname=' . $this->config['base'] . ';host=' . $this->config['host'] . ';charset=' . $this->config['charset'];
 			$connectionString = 'mysql:';
 			if (!empty($this->config['socket'])){
 				$connectionString .= 'unix_socket=' . $this->config['socket'] . ';';
@@ -193,6 +183,7 @@ class ormPDOClass
 	/**
 	 * @param string $type
 	 * @param string $table
+	 * @param array $settings
 	 * - fields: array
 	 * - conditions: array
 	 * - joins: array[ [tableName, settings: array[conditions]] ]
@@ -609,96 +600,6 @@ class ormPDOClass
 			print $sql . ";\r\n";
 		}
 
-//		$cudOperations = array( 'insert', 'update', 'delete' );
-//		$isCUD = false;
-//		$useCache = false;
-//		$needToCache = false;
-
-//		if(empty($operation) || empty($tables)){
-//
-//			$queryForAnalysis = trim(strtolower($sql));
-//
-////			#for custom queries cache is always on because parsing of every query is too hard
-////			$useCache = true;
-//
-//			#1 get operation
-//			foreach($cudOperations as $cudOperation){
-//				if(substr($queryForAnalysis, 0, strlen($cudOperation)) == $cudOperation){
-//					$operation = $cudOperation;
-//					break;
-//				}
-//			}
-//
-//			if(empty($operation)){
-//				$operation = 'select';
-//			}
-//			else{
-//				$isCUD = true;
-//			}
-//
-////			#create query copy to be in one line without double spaces
-////			$queryForAnalysis = str_replace(array("\r\n", "\r", "\n", "\t"), ' ', $queryForAnalysis);
-////			$queryForAnalysis = preg_replace('/(?|( )+|(\\n)+)/', '$1', $queryForAnalysis);
-//
-//			require_once( ENGINE.'/modules/sql_parser/src/PHPSQLParser.php' );
-//			$parser = new PHPSQLParser();
-//			$parsed = $parser->parse($queryForAnalysis);
-//
-//			//UPDATE
-//			//FROM
-//			//INSERT
-//
-////			debug($parsed);
-//		}
-//		else{
-//			if(in_array($operation, $cudOperations))
-//				$isCUD = true;
-//
-//			sort($tables);
-//
-//			#get cache settings for all tables. If for all cache is on, then use cache
-//			$useCache = true;
-//			foreach($tables as $table){
-//				if(!isset($this->tableModels[$table])) {
-//					$tableModelFile = $this->config['modelsDirectory'] . '/' . $table . '.php';
-//					if (file_exists($tableModelFile)) {
-//						require_once($tableModelFile);
-//						$className = $table . 'Model';
-//						$this->tableModels[$table] = new $className;
-//						$useCache *= $this->tableModels[$table]->useCache;
-//					} else {
-//						$useCache *= false;
-//					}
-//				}
-//				else{
-//					$useCache *= $this->tableModels[$table]->useCache;
-//				}
-//			}
-//
-//			if($useCache){
-//				if($operation == 'select'){
-//					$folderName = '|'.implode('|', $tables).'|';
-//					$folderPath = $this->config['cacheDirectory'] . '/' . $folderName;
-//					if(!is_dir($folderPath)){
-//						mkdir($folderPath);
-//					}
-//					$fileName = md5($sql).'.tmp';
-//					$filePath = $folderPath . '/' . $fileName;
-//					if(file_exists($filePath)){
-//						//get cache and return it
-//						$cachedStatement = unserialize(file_get_contents($filePath));
-//						return $cachedStatement;
-//					}
-//					else{
-//						$needToCache = true;
-//					}
-//				}
-//				elseif($isCUD){
-//
-//				}
-//			}
-//		}
-
 		if ($this->fictive) {
 			if (strpos($sql, 'UPDATE ') !== false)
 				return true;
@@ -724,11 +625,6 @@ class ormPDOClass
 			return false;
 		}
 
-//		if(!empty($params)){
-//			$stmt->bind_param("s", $params);
-//			//$stmt->bindValue(':id', $id);
-//		}
-
 		try {
 			$sth->execute($params);
 		} catch (PDOException $e) {
@@ -744,10 +640,6 @@ class ormPDOClass
 			}
 			return false;
 		}
-
-//		if($needToCache && !empty($filePath)){
-//			file_put_contents($filePath, serialize($sth));
-//		}
 
 		return $sth;
 
@@ -846,10 +738,4 @@ class ormPDOClass
 		return $result;
 	}
 
-}
-
-
-
-class OrmModel{
-	public $useCache = false;
 }
