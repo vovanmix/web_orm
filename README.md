@@ -51,8 +51,8 @@ ORDER BY table1.field1 asc, table1.field2 desc
 limit 10
 ```
 You can use several types of find queries:
-`all` will return array of all found records
-`first` will return first found record
+`all` will return array of all found records,
+`first` will return first found record,
 `list` will return all records in the following format: first value in the "fields" setting as key, and the second as value
 
 Also you can use a magic functions to run Find:
@@ -65,7 +65,7 @@ $users = $ORM->findByCity('users', 'Los Angeles');
 ##Other operations
 You can use the object to insert, it will return the ID of the inserted record
 ```
-$ORM->save('advert_logs', [
+$ID = $ORM->save('advert_logs', [
 	'advert_id' => $id,
 	'price' => $advert['price'],
 	'time' => date('Y-m-d H:i:s'),
@@ -76,8 +76,8 @@ $ORM->save('advert_logs', [
 ```
 You can use the object to update, it will return count of updated records
 ```
-$ORM->update('user', [
-	'last_activity' => date('Y-m-d H:i:s')
+$updatedCount = $ORM->update('user', [
+		'last_activity' => date('Y-m-d H:i:s')
 	],
 	[
 		['id', '=', $user_id]
@@ -93,7 +93,7 @@ $ORM->remove('variants', [
 ]);
 ```
 ##Models
-You can simplify your code by omitting database names with the help of Models. You need to include a model class and create a new instance:
+You can simplify your code by omitting table names with the help of Models. You need to include a model class and create a new instance:
 ```
 require_once("model.php");
 $userModel = new Model( false, 'user', $ORM->connection );
