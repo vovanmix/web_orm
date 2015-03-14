@@ -95,6 +95,7 @@ $ORM->remove('variants', [
 ##Models
 You can simplify your code by omitting table names with the help of Models. You need to include a model class and create a new instance:
 ```
+//include main class and create instance as usual
 require_once("model.php");
 $userModel = new Model( false, 'user', $ORM->connection );
 //or
