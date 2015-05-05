@@ -1,5 +1,7 @@
 <?php
 
+namespace vovanmix\web_orm;
+
 class Model extends ormPDOClass{
 
 	protected $table = '';
@@ -11,7 +13,7 @@ class Model extends ormPDOClass{
 		if(!empty($connection)){
 			$this->connection = &$connection;
 		}else{
-			return parent::__construct($config);
+			parent::__construct($config);
 		}
 	}
 
