@@ -1,5 +1,11 @@
 <?php
 
+namespace vovanmix\web_orm;
+
+use PDO;
+use PDOException;
+use PDOStatement;
+
 class ormPDOClass
 {
 

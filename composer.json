@@ -1,0 +1,17 @@
+{
+  "name": "vovanmix/web_orm",
+  "version": "1.0.0",
+  "type": "plugin",
+  "description": "simple lightweight ORM for MySQL written on PHP",
+  "keywords": ["ORM","PHP", "database"],
+  "homepage": "http://github.com/vovanmix/web-orm",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Vladimir Mikhaylovskiy",
+      "email": "singingcode@gmail.com",
+      "homepage": "http://www.vprogrammer.com",
+      "role": "Developer"
+    }
+  ]
+}
