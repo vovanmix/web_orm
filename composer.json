@@ -1,7 +1,7 @@
 {
   "name": "vovanmix/web_orm",
   "version": "1.0.0",
-  "type": "plugin",
+  "type": "library",
   "description": "simple lightweight ORM for MySQL written on PHP",
   "keywords": ["ORM","PHP", "database"],
   "homepage": "http://github.com/vovanmix/web-orm",
@@ -13,5 +13,10 @@
       "homepage": "http://www.vprogrammer.com",
       "role": "Developer"
     }
-  ]
+  ],
+  "autoload": {
+    "psr-4": {
+      "vovanmix\\web_orm\\": "src/"
+    }
+  }
 }
