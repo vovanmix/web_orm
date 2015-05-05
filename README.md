@@ -3,6 +3,14 @@ This project is a simple lightweight ORM for MySQL written on PHP
 
 It works with PHP 5.3+ and MySQL with PDO_MYSQL for PHP enabled
 
+##Install
+Install via Composer:
+```
+"vovanmix/web_orm": "dev-master"
+```
+
+##Usage
+
 To use it, simply include the class file and create an instance:
 ```
 require_once("ormPDOClass.php");
