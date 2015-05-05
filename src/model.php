@@ -1,6 +1,6 @@
 <?php
 
-namespace vovanmix\web_orm;
+namespace Vovanmix\WebOrm;
 
 class Model extends ormPDOClass{
 

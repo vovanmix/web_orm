@@ -1,6 +1,6 @@
 <?php
 
-namespace vovanmix\web_orm;
+namespace Vovanmix\WebOrm;
 
 use PDO;
 use PDOException;

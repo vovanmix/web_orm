@@ -7,7 +7,7 @@ To use it, simply include the class file and create an instance:
 ```
 require_once("ormPDOClass.php");
 // OR
-// use vovanmix\web_orm\ormPDOClass;
+// use Vovanmix\WebOrm\ormPDOClass;
 $config = array(
 	'host' => $HOST,
 	'base' => $DATABASE_NAME,
@@ -101,7 +101,7 @@ You can simplify your code by omitting table names with the help of Models. You 
 //include main class and create instance as usual
 require_once("model.php");
 // OR
-// use vovanmix\web_orm\Model;
+// use Vovanmix\WebOrm\Model;
 $userModel = new Model( false, 'user', $ORM->connection );
 //or
 $userModel = new Model( $config, 'user' );
