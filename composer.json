@@ -1,10 +1,10 @@
 {
   "name": "vovanmix/web_orm",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "library",
   "description": "simple lightweight ORM for MySQL written on PHP",
   "keywords": ["ORM","PHP", "database"],
-  "homepage": "http://github.com/vovanmix/web-orm",
+  "homepage": "http://github.com/vovanmix/web_orm",
   "license": "MIT",
   "authors": [
     {
@@ -14,9 +14,13 @@
       "role": "Developer"
     }
   ],
+  "require": {
+    "php": ">=5.3.0"
+  },
   "autoload": {
     "psr-4": {
       "Vovanmix\\WebOrm\\": "src/"
     }
-  }
+  },
+  "target-dir" : "vendor/package"
 }
