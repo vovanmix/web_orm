@@ -21,6 +21,5 @@
     "psr-4": {
       "Vovanmix\\WebOrm\\": "src/"
     }
-  },
-  "target-dir" : "vendor/package"
+  }
 }
