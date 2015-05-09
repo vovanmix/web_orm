@@ -87,7 +87,7 @@ class ormPDOClass
 
 	/**
 	 * @param $value
-	 * @return mixed|string
+	 * @return string
 	 */
 	private function prepare($value)
 	{
@@ -128,7 +128,7 @@ class ormPDOClass
 			if ((isset($condition_set[0]) && is_array($condition_set[0])) || (!isset($condition_set[0]))) {
 				$condition_sets[] = ' (' . $this->buildConditions($condition_set, true, $sub_operation) . ') ';
 			} else {
-				$condition_sets[] = $this->process_conditions($condition_set);
+				$condition_sets[] = $this->processConditions($condition_set);
 			}
 		}
 		if (!empty($condition_sets)) {
@@ -142,10 +142,10 @@ class ormPDOClass
 	}
 
 	/**
-	 * @param $condition_set
+	 * @param array $condition_set
 	 * @return string
 	 */
-	private function process_conditions($condition_set) {
+	private function processConditions($condition_set) {
 		if (is_array($condition_set[2])) {
 			$condition_arr = array();
 			foreach ($condition_set[2] as $c) {
@@ -182,6 +182,10 @@ class ormPDOClass
 		return $result;
 	}
 
+    /**
+     * @param array $fields
+     * @return string
+     */
     private function buildFields($fields){
 
         $q = '';
@@ -201,7 +205,11 @@ class ormPDOClass
         }
         return $q;
     }
-    
+
+    /**
+     * @param array $joins
+     * @return string
+     */
     private function buildJoins($joins){
         $q= '';
         if (!empty($joins)) {
@@ -215,7 +223,7 @@ class ormPDOClass
                 $join_statement = ' LEFT JOIN ' . $tableName;
                 $on_sets = array();
                 foreach ($join_set[1] as $on_set) {
-                    $on_sets[] = $this->process_conditions($on_set);
+                    $on_sets[] = $this->processConditions($on_set);
                 }
 
                 if (!empty($on_sets)) {
@@ -232,7 +240,11 @@ class ormPDOClass
         
         return $q;
     }
-    
+
+    /**
+     * @param array $having
+     * @return string
+     */
     private function buildHaving($having){
         $q = '';
         $havingSets = array();
@@ -251,6 +263,10 @@ class ormPDOClass
         return $q;
     }
 
+    /**
+     * @param array $order
+     * @return string
+     */
     private function buildOrder($order){
         $q = '';
         $order_sets = array();
@@ -268,6 +284,11 @@ class ormPDOClass
         return $q;
     }
 
+    /**
+     * @param string $table
+     * @param array $settings
+     * @return string
+     */
     private function buildSearchQueryFromSettings($table, $settings){
         $q = 'SELECT ';
 
@@ -305,10 +326,11 @@ class ormPDOClass
     }
 
     /**
-     * @param $res PDOStatement
+     * @param PDOStatement $res
+     * @param array $settings
      * @return array
      */
-    private function fetchSearchFirst($res){
+    private function fetchSearchFirst($res, $settings){
         if (!empty($settings['table_arrays'])) {
             $row = $res->fetch(PDO::FETCH_NUM);
             $map = $this->resultMap($res);
@@ -321,10 +343,11 @@ class ormPDOClass
     }
 
     /**
-     * @param $res PDOStatement
+     * @param PDOStatement $res
+     * @param array $settings
      * @return array
      */
-    private function fetchSearchAll($res){
+    private function fetchSearchAll($res, $settings){
         $data = array();
 
         if (!empty($settings['table_arrays'])) {
@@ -355,15 +378,15 @@ class ormPDOClass
     }
 
     /**
-     * @param $res PDOStatement
-     * @param $fields array
+     * @param PDOStatement $res
+     * @param array $settings
      * @return array
      */
-    private function fetchSearchList($res, $fields){
+    private function fetchSearchList($res, $settings){
         $data = array();
 
         while (($row = $res->fetch(PDO::FETCH_ASSOC)) !== false) {
-            $data[$row[$fields[0]]] = $row[$fields[1]];
+            $data[$row[$settings['fields'][0]]] = $row[$settings['fields'][1]];
         }
 
         return $data;
@@ -398,11 +421,11 @@ class ormPDOClass
         if (!empty($res)) {
             switch ($type) {
                 case 'first':
-                    return $this->fetchSearchFirst($res);
+                    return $this->fetchSearchFirst($res, $settings);
                 case 'all':
-                    return $this->fetchSearchAll($res);
+                    return $this->fetchSearchAll($res, $settings);
                 case 'list':
-                    return $this->fetchSearchList($res, $settings['fields']);
+                    return $this->fetchSearchList($res, $settings);
             }
         }
 
