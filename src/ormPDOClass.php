@@ -74,7 +74,7 @@ class ormPDOClass
 			$dbConnection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 			$dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		} catch (PDOException $e) {
-			die('Connection failed: ' . $e->getMessage());
+            throw new PDOException('Connection failed: ' . $e->getMessage());
 		}
 
 		$this->connection = & $dbConnection;
@@ -168,15 +168,13 @@ class ormPDOClass
 				$result = "(" . $condition_set[0] . " " . $condition_set[1] . " " . $condition_set[2] . ")";
 			}
 		} else {
-			if (substr($condition_set[1], 0, 1) == '.') {
-				$condition_set[1] = substr($condition_set[1], 1, strlen($condition_set[1] - 1));
-				$result = $condition_set[0] . " " . $condition_set[1] . " " . $condition_set[2] . " ";
-			} elseif( is_numeric($condition_set[2]) ){
-				$result = $condition_set[0] . " " . $condition_set[1] . " " . $condition_set[2] . " ";
-			}
-			else{
-				$result = $condition_set[0] . " " . $condition_set[1] . " '" . $condition_set[2] . "' ";
-			}
+            if (substr($condition_set[1], 0, 1) == '.') {
+                $condition_set[1] = substr($condition_set[1], 1, strlen($condition_set[1] - 1));
+            }
+            elseif( !is_numeric($condition_set[2]) ){
+                $condition_set[2] = "'" . $condition_set[2] . "'";
+            }
+            $result = $condition_set[0] . " " . $condition_set[1] . " " . $condition_set[2] . " ";
 		}
 		return $result;
 	}
@@ -194,7 +192,7 @@ class ormPDOClass
 	 * - limit: string
 	 * - table_arrays: bool
 	 * - as_key: string | array[table, field]
-	 * @return array
+	 * @return array|bool
 	 */
 	public function find($type, $table, $settings = array())
 	{
@@ -307,11 +305,7 @@ class ormPDOClass
 					if (!empty($settings['table_arrays'])) {
 						$row = $res->fetch(PDO::FETCH_NUM);
 						$map = $this->resultMap($res);
-						$result = [];
-						foreach($row as $fieldNum => $fieldValue){
-							$mapForField = $map[$fieldNum];
-							$result[ $mapForField['table'] ][ $mapForField['name'] ] = $fieldValue;
-						}
+                        $row = $this->mapResultRow($row, $map);
 					} else{
 						$row = $res->fetch(PDO::FETCH_ASSOC);
 					}
@@ -330,11 +324,7 @@ class ormPDOClass
 						$map = $this->resultMap($res);
 						$data = [];
 						foreach($tempData as $row) {
-							$result = [];
-							foreach($row as $fieldNum => $fieldValue){
-								$mapForField = $map[$fieldNum];
-								$result[ $mapForField['table'] ][ $mapForField['name'] ] = $fieldValue;
-							}
+                            $result = $this->mapResultRow($row, $map);
 
 							//as_key must have a structure like ['table' => table, 'field' => field]
 							if (isset($settings['as_key']) && is_array($settings['as_key'])) {
@@ -377,6 +367,15 @@ class ormPDOClass
 		return false;
 
 	}
+
+    private function mapResultRow($row, $map){
+        $result = [];
+        foreach($row as $fieldNum => $fieldValue){
+            $mapForField = $map[$fieldNum];
+            $result[ $mapForField['table'] ][ $mapForField['name'] ] = $fieldValue;
+        }
+        return $result;
+    }
 
 	/**
 	 * @param string $q
@@ -519,8 +518,6 @@ class ormPDOClass
 
 		}
 
-//		debug($q); return;
-
 		return $this->execute($q, 'update', $table)->rowCount();
 	}
 
@@ -589,9 +586,9 @@ class ormPDOClass
 	/**
 	 * @param string $sql
 	 * @param string $operation
-	 * @param array $tables
+	 * @param array|string $tables
 	 * @param array $params
-	 * @return PDOStatement
+	 * @return PDOStatement|bool
 	 */
 	private function execute($sql, $operation=null, $tables=null, $params = array())
 	{
@@ -613,38 +610,37 @@ class ormPDOClass
 		try {
 			$sth = $this->connection->prepare($sql);
 		} catch (PDOException $e) {
-			if ($this->debug) {
-				print '<div>QUERY FAILED</div>."\r\n"';
-				print '<div>' . $e->getMessage() . '</div>."\r\n"';
-			} else {
-				if ($this->print_errors) {
-					print "" . $e->getMessage() . "\r\n" . $sql . "\r\n\r\n";
-				} else {
-					error_log($e->getMessage(), 0);
-				}
-			}
+			$this->logExecutionError($sql, $e);
 			return false;
 		}
 
 		try {
 			$sth->execute($params);
 		} catch (PDOException $e) {
-			if ($this->debug) {
-				print '<div>QUERY FAILED</div>."\r\n"';
-				print '<div>' . $e->getMessage() . '</div>."\r\n"';
-			} else {
-				if ($this->print_errors) {
-					print "" . $e->getMessage() . "\r\n" . $sql . "\r\n\r\n";
-				} else {
-					error_log($e->getMessage(), 0);
-				}
-			}
+            $this->logExecutionError($sql, $e);
 			return false;
 		}
 
 		return $sth;
 
 	}
+
+    /**
+     * @param $sql string
+     * @param $e \Exception|PDOException
+     */
+    private function logExecutionError($sql, $e){
+        if ($this->debug) {
+            print '<div>QUERY FAILED</div>."\r\n"';
+            print '<div>' . $e->getMessage() . '</div>."\r\n"';
+        } else {
+            if ($this->print_errors) {
+                print "" . $e->getMessage() . "\r\n" . $sql . "\r\n\r\n";
+            } else {
+                error_log($e->getMessage(), 0);
+            }
+        }
+    }
 
 	public function get($table, $settings = array())
 	{
@@ -684,7 +680,12 @@ class ormPDOClass
 		return call_user_func_array(array($this, $applicableMethod), $params);
 	}
 
-
+    /**
+     * @param mixed $type
+     * @param mixed $key
+     * @param mixed $value
+     * @return bool
+     */
 	protected static function _cache($type, $key, $value = false)
 	{
 		$key = '_' . $key;
