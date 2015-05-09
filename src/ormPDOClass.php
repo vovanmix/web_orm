@@ -819,7 +819,7 @@ class ormPDOClass
 	 * @param string $camelCasedWord Camel-cased word to be "underscorized"
 	 * @return string Underscore-syntaxed version of the $camelCasedWord
 	 */
-    public function underscore($camelCasedWord)
+    public static function underscore($camelCasedWord)
 	{
 		if (!($result = self::_cache(__FUNCTION__, $camelCasedWord))) {
 			$result = strtolower(preg_replace('/(?<=\\w)([A-Z])/', '_\\1', $camelCasedWord));

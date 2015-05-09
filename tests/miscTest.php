@@ -10,25 +10,21 @@ class miscTest extends \PHPUnit_Framework_TestCase
     public function testCamelize()
     {
         $ORM = new ormPDOClass([]);
-
-//        $stack = array();
-//        $this->assertEquals(0, count($stack));
-//
-//        array_push($stack, 'foo');
-//        $this->assertEquals('foo', $stack[count($stack)-1]);
-//        $this->assertEquals(1, count($stack));
-//
-//        $this->assertEquals('foo', array_pop($stack));
-//        $this->assertEquals(0, count($stack));
+        $result = $ORM::camelize('hello_world');
+        $this->assertEquals('HelloWorld', $result);
     }
 
     public function testHumanize()
     {
-
+        $ORM = new ormPDOClass([]);
+        $result = $ORM::humanize('hello_world');
+        $this->assertEquals('hello world', $result);
     }
 
     public function testUnderscore()
     {
-
+        $ORM = new ormPDOClass([]);
+        $result = $ORM::underscore('HelloWorld');
+        $this->assertEquals('hello_world', $result);
     }
 }
