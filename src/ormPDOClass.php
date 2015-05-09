@@ -102,7 +102,7 @@ class ormPDOClass
 	}
 
 	/**
-	 * @param $value
+	 * @param mixed $value
 	 * @return string
 	 */
 	public static function prepare($value)
@@ -113,10 +113,10 @@ class ormPDOClass
 			$value = addslashes(trim($value));
 		}
 		if(is_array($value)) {
-			$value = (string)$value;
+			$value = reset($value);
 		}
 
-		$value = !empty($value) ? "'" . $value . "'" : (($value === 0 || $value === '0') ? '0' : ($value === '' ? '""' : 'NULL'));
+		$value = !empty($value) ? "'" . $value . "'" : (($value === 0 || $value === '0') ? '0' : ($value === '' ? '""' : ($value === false ? 0 : 'NULL')));
 
 		return $value;
 	}

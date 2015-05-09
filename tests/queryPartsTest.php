@@ -56,6 +56,42 @@ class queryPartsTest extends \PHPUnit_Framework_TestCase
     }
 
     public function testPrepare(){
+        $ORM = new ormPDOClass(['base' => 'test']);
 
+        $val = $ORM::prepare(" 'MyName' is hello ");
+        $expectedVal = "'`MyName` is hello'";
+        $this->assertEquals($expectedVal, $val);
+
+        $val2 = $ORM::prepare(['hello']);
+        $expectedVal2 = "'hello'";
+        $this->assertEquals($expectedVal2, $val2);
+
+        $val3 = $ORM::prepare(1);
+        $expectedVal3 = "'1'";
+        $this->assertEquals($expectedVal3, $val3);
+
+        $val = $ORM::prepare(0);
+        $expectedVal = "0";
+        $this->assertEquals($expectedVal, $val);
+
+        $val = $ORM::prepare('0');
+        $expectedVal = "0";
+        $this->assertEquals($expectedVal, $val);
+
+        $val = $ORM::prepare('');
+        $expectedVal = '""';
+        $this->assertEquals($expectedVal, $val);
+
+        $val = $ORM::prepare(NULL);
+        $expectedVal = 'NULL';
+        $this->assertEquals($expectedVal, $val);
+
+        $val = $ORM::prepare(false);
+        $expectedVal = 0;
+        $this->assertEquals($expectedVal, $val);
+
+        $val = $ORM::prepare(true);
+        $expectedVal = "'1'";
+        $this->assertEquals($expectedVal, $val);
     }
 }
