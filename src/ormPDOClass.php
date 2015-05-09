@@ -217,7 +217,7 @@ class ormPDOClass
             }
             $q .= implode(',', $fieldsArray);
         } else {
-            $q .= ' * ';
+            $q .= '*';
         }
         return $q;
     }
@@ -228,30 +228,28 @@ class ormPDOClass
      */
     public static function buildJoins($joins){
         $q= '';
-        if (!empty($joins)) {
-            $join_sets = array();
-            foreach ($joins as $join_set) {
-                if(is_array($join_set[0])) {
-                    $tableName = '`'.$join_set[0][0] .'` as '.$join_set[0][1];
-                } else {
-                    $tableName = "`$join_set[0]`";
-                }
-                $join_statement = ' LEFT JOIN ' . $tableName;
-                $on_sets = array();
-                foreach ($join_set[1] as $on_set) {
-                    $on_sets[] = self::processConditions($on_set);
-                }
-
-                if (!empty($on_sets)) {
-                    $join_statement .= ' ON ' . implode(' AND ', $on_sets);
-                }
-
-                $join_sets[] = $join_statement;
+        $join_sets = array();
+        foreach ($joins as $join_set) {
+            if(is_array($join_set[0])) {
+                $tableName = '`'.$join_set[0][0] .'` as '.$join_set[0][1];
+            } else {
+                $tableName = "`$join_set[0]`";
+            }
+            $join_statement = 'LEFT JOIN ' . $tableName;
+            $on_sets = array();
+            foreach ($join_set[1] as $on_set) {
+                $on_sets[] = self::processConditions($on_set);
             }
 
-            if (!empty($join_sets)) {
-                $q .= ' ' . implode(' ', $join_sets);
+            if (!empty($on_sets)) {
+                $join_statement .= ' ON ' . implode(' AND ', $on_sets);
             }
+
+            $join_sets[] = $join_statement;
+        }
+
+        if (!empty($join_sets)) {
+            $q .= ' ' . implode(' ', $join_sets);
         }
         
         return $q;
@@ -308,9 +306,7 @@ class ormPDOClass
     public static function buildSearchQuery($table, $settings){
         $q = 'SELECT ';
 
-        if (!empty($settings['fields'])) {
-            $q .= self::buildFields($settings['fields']);
-        }
+        $q .= self::buildFields(!empty($settings['fields']) ? $settings['fields'] : NULL);
 
         $q .= ' FROM `' . $table . '`';
 
