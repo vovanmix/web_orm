@@ -4,10 +4,10 @@ namespace Vovanmix\WebOrm\Tests;
 
 use Vovanmix\WebOrm\ormPDOClass;
 
-class queryPartsTest extends PHPUnit_Framework_TestCase
+class miscTest extends PHPUnit_Framework_TestCase
 {
 
-    public function testBuildFields()
+    public function testCamelize()
     {
         $ORM = new ormPDOClass([]);
 
@@ -22,26 +22,13 @@ class queryPartsTest extends PHPUnit_Framework_TestCase
 //        $this->assertEquals(0, count($stack));
     }
 
-    public function testBuildJoins()
+    public function testHumanize()
     {
 
     }
 
-    public function testBuildHaving()
+    public function testUnderscore()
     {
-
-    }
-
-    public function testBuildOrder()
-    {
-
-    }
-
-    public function testBuildConditions(){
-
-    }
-
-    public function testPrepare(){
 
     }
 }

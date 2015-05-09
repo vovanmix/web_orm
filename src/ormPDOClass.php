@@ -89,7 +89,7 @@ class ormPDOClass
 	 * @param $value
 	 * @return string
 	 */
-	private function prepare($value)
+	public static function prepare($value)
 	{
 
 		if( is_string($value) ) {
@@ -111,7 +111,7 @@ class ormPDOClass
 	 * @param string $operation
 	 * @return string
 	 */
-	private function buildConditions($conditions, $is_sub_condition = false, $operation = 'AND')
+    public static function buildConditions($conditions, $is_sub_condition = false, $operation = 'AND')
 	{
 		$q = '';
 		$condition_sets = array();
@@ -126,9 +126,9 @@ class ormPDOClass
 
 			#there is array of subsets
 			if ((isset($condition_set[0]) && is_array($condition_set[0])) || (!isset($condition_set[0]))) {
-				$condition_sets[] = ' (' . $this->buildConditions($condition_set, true, $sub_operation) . ') ';
+				$condition_sets[] = ' (' . self::buildConditions($condition_set, true, $sub_operation) . ') ';
 			} else {
-				$condition_sets[] = $this->processConditions($condition_set);
+				$condition_sets[] = self::processConditions($condition_set);
 			}
 		}
 		if (!empty($condition_sets)) {
@@ -145,7 +145,7 @@ class ormPDOClass
 	 * @param array $condition_set
 	 * @return string
 	 */
-	private function processConditions($condition_set) {
+    public static function processConditions($condition_set) {
 		if (is_array($condition_set[2])) {
 			$condition_arr = array();
 			foreach ($condition_set[2] as $c) {
@@ -186,7 +186,7 @@ class ormPDOClass
      * @param array $fields
      * @return string
      */
-    private function buildFields($fields){
+    public static function buildFields($fields){
 
         $q = '';
         $fieldsArray = array();
@@ -210,7 +210,7 @@ class ormPDOClass
      * @param array $joins
      * @return string
      */
-    private function buildJoins($joins){
+    public static function buildJoins($joins){
         $q= '';
         if (!empty($joins)) {
             $join_sets = array();
@@ -223,7 +223,7 @@ class ormPDOClass
                 $join_statement = ' LEFT JOIN ' . $tableName;
                 $on_sets = array();
                 foreach ($join_set[1] as $on_set) {
-                    $on_sets[] = $this->processConditions($on_set);
+                    $on_sets[] = self::processConditions($on_set);
                 }
 
                 if (!empty($on_sets)) {
@@ -245,7 +245,7 @@ class ormPDOClass
      * @param array $having
      * @return string
      */
-    private function buildHaving($having){
+    public static function buildHaving($having){
         $q = '';
         $havingSets = array();
         foreach ($having as $havingSet) {
@@ -267,7 +267,7 @@ class ormPDOClass
      * @param array $order
      * @return string
      */
-    private function buildOrder($order){
+    public static function buildOrder($order){
         $q = '';
         $order_sets = array();
         foreach ($order as $order_set_k => $order_set_v) {
@@ -289,21 +289,21 @@ class ormPDOClass
      * @param array $settings
      * @return string
      */
-    private function buildSearchQuery($table, $settings){
+    public static function buildSearchQuery($table, $settings){
         $q = 'SELECT ';
 
         if (!empty($settings['fields'])) {
-            $q .= $this->buildFields($settings['fields']);
+            $q .= self::buildFields($settings['fields']);
         }
 
         $q .= ' FROM `' . $table . '`';
 
         if (!empty($settings['joins'])) {
-            $q .= $this->buildJoins($settings['joins']);
+            $q .= self::buildJoins($settings['joins']);
         }
 
         if (!empty($settings['conditions'])) {
-            $q .= $this->buildConditions($settings['conditions']);
+            $q .= self::buildConditions($settings['conditions']);
         }
 
         if (!empty($settings['group'])) {
@@ -311,11 +311,11 @@ class ormPDOClass
         }
 
         if (!empty($settings['having'])) {
-            $q .= $this->buildHaving($settings['having']);
+            $q .= self::buildHaving($settings['having']);
         }
 
         if (!empty($settings['order'])) {
-            $q .= $this->buildOrder($settings['order']);
+            $q .= self::buildOrder($settings['order']);
         }
 
         if (!empty($settings['limit'])) {
@@ -333,8 +333,8 @@ class ormPDOClass
     private function fetchSearchFirst($res, $settings){
         if (!empty($settings['table_arrays'])) {
             $row = $res->fetch(PDO::FETCH_NUM);
-            $map = $this->resultMap($res);
-            $row = $this->mapResultRow($row, $map);
+            $map = self::resultMap($res);
+            $row = self::mapResultRow($row, $map);
         } else {
             $row = $res->fetch(PDO::FETCH_ASSOC);
         }
@@ -352,9 +352,9 @@ class ormPDOClass
 
         if (!empty($settings['table_arrays'])) {
             $tempData = $res->fetchAll(PDO::FETCH_NUM);
-            $map = $this->resultMap($res);
+            $map = self::resultMap($res);
             foreach ($tempData as $row) {
-                $result = $this->mapResultRow($row, $map);
+                $result = self::mapResultRow($row, $map);
 
                 //as_key must have a structure like ['table' => table, 'field' => field]
                 if (isset($settings['as_key']) && is_array($settings['as_key'])) {
@@ -414,7 +414,7 @@ class ormPDOClass
             $settings['limit'] = 1;
         }
 
-        $q = $this->buildSearchQuery($table, $settings);
+        $q = self::buildSearchQuery($table, $settings);
 
         $res = $this->execute($q);
 
@@ -434,7 +434,7 @@ class ormPDOClass
 
 	}
 
-    private function mapResultRow($row, $map) {
+    public static function mapResultRow($row, $map) {
         $result = [];
         foreach($row as $fieldNum => $fieldValue) {
             $mapForField = $map[$fieldNum];
@@ -483,7 +483,7 @@ class ormPDOClass
 
 		if(!empty($withMap)) {
 			if( !empty($res) ) {
-				$map = $this->resultMap($res);
+				$map = self::resultMap($res);
 				$ret = [
 					'data' => $ret,
 					'map' => $map
@@ -498,7 +498,7 @@ class ormPDOClass
 	 * @param PDOStatement $res
 	 * @return array
 	 */
-	private function resultMap($res) {
+    public static function resultMap($res) {
 		$columns = [];
 
 		for ($i = 0; $i < $res->columnCount(); $i++) {
@@ -514,14 +514,14 @@ class ormPDOClass
      * @param $data
      * @return string
      */
-    private function buildSaveQuery($table, $data){
+    public static function buildSaveQuery($table, $data){
         $q = 'INSERT INTO `' . $table .'`';
 
         $fields = array();
         $values = array();
         foreach ($data as $field => $value) {
             $fields[] = $field;
-            $values[] = $this->prepare($value);
+            $values[] = self::prepare($value);
         }
 
         $q .= ' (' . implode(',', $fields) . ')';
@@ -538,7 +538,7 @@ class ormPDOClass
 	public function save($table, $data)
 	{
 
-		$q = $this->buildSaveQuery($table, $data);
+		$q = self::buildSaveQuery($table, $data);
 
 		if ($this->execute($q)) {
 			if (!$this->fictive) {
@@ -561,7 +561,7 @@ class ormPDOClass
 		return $this->connection->lastInsertId();
 	}
     
-    private function buildUpdateQuery($table, $data, $conditions){
+    public static function buildUpdateQuery($table, $data, $conditions){
         $q = 'UPDATE `' . $table . '` SET ';
 
         $fields = array();
@@ -570,14 +570,14 @@ class ormPDOClass
                 $field = substr($field, 0, -2);
                 $fields[] = $field . ' = ' . $value;
             } else{
-                $fields[] = $field . ' = ' . $this->prepare($value);
+                $fields[] = $field . ' = ' . self::prepare($value);
             }
         }
 
         $q .= implode(',', $fields);
 
         if (!empty($conditions)) {
-            $q .= $this->buildConditions($conditions);
+            $q .= self::buildConditions($conditions);
         }
         
         return $q;
@@ -601,16 +601,16 @@ class ormPDOClass
 	 */
 	public function update($table, $data, $conditions = array())
 	{
-		$q = $this->buildUpdateQuery($table, $data, $conditions);
+		$q = self::buildUpdateQuery($table, $data, $conditions);
 
         return $this->executeQueryAndReturnRowCount($q);
 	}
 
-    private function buildRemoveQuery($table, $conditions){
+    public static function buildRemoveQuery($table, $conditions){
         $q = 'DELETE FROM `' . $table . '`';
 
         if (!empty($conditions)) {
-            $q .= $this->buildConditions($conditions);
+            $q .= self::buildConditions($conditions);
         }
 
         return $q;
@@ -623,7 +623,7 @@ class ormPDOClass
 	 */
 	public function remove($table, $conditions = array())
 	{
-		$q = $this->buildRemoveQuery($table, $conditions);
+		$q = self::buildRemoveQuery($table, $conditions);
 
         return $this->executeQueryAndReturnRowCount($q);
 	}
@@ -791,7 +791,7 @@ class ormPDOClass
 	 * @param string $lowerCaseAndUnderscoredWord Word to camelize
 	 * @return string Camelized word. LikeThis.
 	 */
-	protected function camelize($lowerCaseAndUnderscoredWord)
+	public static function camelize($lowerCaseAndUnderscoredWord)
 	{
 		if (!($result = self::_cache(__FUNCTION__, $lowerCaseAndUnderscoredWord))) {
             $result = str_replace(' ', '', self::humanize($lowerCaseAndUnderscoredWord));
@@ -800,8 +800,11 @@ class ormPDOClass
 		return $result;
 	}
 
-
-	protected static function humanize($lowerCaseAndUnderscoredWord)
+    /**
+     * @param $lowerCaseAndUnderscoredWord
+     * @return bool|string
+     */
+    public static function humanize($lowerCaseAndUnderscoredWord)
 	{
 		if (!($result = self::_cache(__FUNCTION__, $lowerCaseAndUnderscoredWord))) {
 			$result = ucwords(str_replace('_', ' ', $lowerCaseAndUnderscoredWord));
@@ -816,7 +819,7 @@ class ormPDOClass
 	 * @param string $camelCasedWord Camel-cased word to be "underscorized"
 	 * @return string Underscore-syntaxed version of the $camelCasedWord
 	 */
-	protected function underscore($camelCasedWord)
+    public function underscore($camelCasedWord)
 	{
 		if (!($result = self::_cache(__FUNCTION__, $camelCasedWord))) {
 			$result = strtolower(preg_replace('/(?<=\\w)([A-Z])/', '_\\1', $camelCasedWord));

@@ -17,6 +17,9 @@
   "require": {
     "php": ">=5.3.0"
   },
+  "require-dev": {
+    "phpunit/phpunit": "dev-master"
+  },
   "autoload": {
     "classmap": ["tests"],
     "psr-4": {
