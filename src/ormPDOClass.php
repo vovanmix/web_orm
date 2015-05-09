@@ -583,6 +583,16 @@ class ormPDOClass
         return $q;
     }
 
+    private function executeQueryAndReturnRowCount($q){
+        $result = $this->execute($q);
+
+        if(!empty($result)) {
+            return $result->rowCount();
+        } else{
+            return 0;
+        }
+    }
+
 	/**
 	 * @param string $table
 	 * @param array $data
@@ -593,13 +603,7 @@ class ormPDOClass
 	{
 		$q = $this->buildUpdateQuery($table, $data, $conditions);
 
-        $result = $this->execute($q);
-
-        if(!empty($result)) {
-            return $result->rowCount();
-        } else{
-            return 0;
-        }
+        return $this->executeQueryAndReturnRowCount($q);
 	}
 
     private function buildRemoveQuery($table, $conditions){
@@ -621,14 +625,7 @@ class ormPDOClass
 	{
 		$q = $this->buildRemoveQuery($table, $conditions);
 
-        $result = $this->execute($q);
-
-        if(!empty($result)) {
-            return $result->rowCount();
-        } else{
-            return 0;
-        }
-
+        return $this->executeQueryAndReturnRowCount($q);
 	}
 
 	/**
