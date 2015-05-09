@@ -280,18 +280,20 @@ class ormPDOClass
     }
 
     /**
-     * @param array $joins
+     * @param array $settings
      * @return string
      */
-    public static function buildJoins($joins){
+    public static function buildJoins($settings){
         $q= '';
-        $join_sets = array();
-        foreach ($joins as $join_set) {
-            $join_sets[] = self::buildJoinStatement($join_set);
-        }
+        if(!empty($settings['joins'])) {
+            $join_sets = array();
+            foreach ($settings['joins'] as $join_set) {
+                $join_sets[] = self::buildJoinStatement($join_set);
+            }
 
-        if (!empty($join_sets)) {
-            $q .= ' ' . implode(' ', $join_sets);
+            if (!empty($join_sets)) {
+                $q .= ' ' . implode(' ', $join_sets);
+            }
         }
         
         return $q;
@@ -359,9 +361,7 @@ class ormPDOClass
 
         $q .= ' FROM `' . $table . '`';
 
-        if (!empty($settings['joins'])) {
-            $q .= self::buildJoins($settings['joins']);
-        }
+        $q .= self::buildJoins($settings);
 
         if (!empty($settings['conditions'])) {
             $q .= self::buildConditionSet($settings['conditions']);
