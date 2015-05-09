@@ -20,12 +20,12 @@
     "phpunit/phpunit": "dev-master"
   },
   "autoload": {
-    "psr-0": {
+    "psr-4": {
       "Vovanmix\\WebOrm\\": "src/"
     }
   },
   "autoload-dev": {
-    "psr-0": {
+    "psr-4": {
       "Vovanmix\\WebOrm\\Tests\\": "tests/"
     }
   },
