@@ -267,25 +267,8 @@ class ormPDOClass
 
         return $q;
     }
-    
-	/**
-	 * @param string $type
-	 * @param string $table
-	 * @param array $settings
-	 * - fields: array
-	 * - conditions: array
-	 * - joins: array[ [tableName, settings: array[conditions]] ]
-	 * - group: string
-	 * - having: array[conditions]
-	 * - order: array[field: direction]
-	 * - limit: string
-	 * - table_arrays: bool
-	 * - as_key: string | array[table, field]
-	 * @return array|bool
-	 */
-	public function find($type, $table, $settings = array())
-    {
 
+    private function buildSearchQueryFromSettings($table, $settings){
         $q = 'SELECT ';
 
         if (!empty($settings['fields'])) {
@@ -314,72 +297,112 @@ class ormPDOClass
             $q .= $this->buildOrder($settings['order']);
         }
 
+        if (!empty($settings['limit'])) {
+            $q .= ' LIMIT ' . $settings['limit'];
+        }
+
+        return $q;
+    }
+
+    /**
+     * @param $res PDOStatement
+     * @return array
+     */
+    private function fetchSearchFirst($res){
+        if (!empty($settings['table_arrays'])) {
+            $row = $res->fetch(PDO::FETCH_NUM);
+            $map = $this->resultMap($res);
+            $row = $this->mapResultRow($row, $map);
+        } else {
+            $row = $res->fetch(PDO::FETCH_ASSOC);
+        }
+
+        return $row;
+    }
+
+    /**
+     * @param $res PDOStatement
+     * @return array
+     */
+    private function fetchSearchAll($res){
+        $data = array();
+
+        if (!empty($settings['table_arrays'])) {
+            $tempData = $res->fetchAll(PDO::FETCH_NUM);
+            $map = $this->resultMap($res);
+            foreach ($tempData as $row) {
+                $result = $this->mapResultRow($row, $map);
+
+                //as_key must have a structure like ['table' => table, 'field' => field]
+                if (isset($settings['as_key']) && is_array($settings['as_key'])) {
+                    $data[$result[$settings['as_key'][0]][$settings['as_key'][1]]] = $result;
+                } else {
+                    $data[] = $result;
+                }
+            }
+        } else {
+            //as_key must be a string
+            if (isset($settings['as_key'])) {
+                while (($row = $res->fetch(PDO::FETCH_ASSOC)) !== false) {
+                    $data[$row[$settings['as_key']]] = $row;
+                }
+            } else {
+                $data = $res->fetchAll(PDO::FETCH_ASSOC);
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param $res PDOStatement
+     * @param $fields array
+     * @return array
+     */
+    private function fetchSearchList($res, $fields){
+        $data = array();
+
+        while (($row = $res->fetch(PDO::FETCH_ASSOC)) !== false) {
+            $data[$row[$fields[0]]] = $row[$fields[1]];
+        }
+
+        return $data;
+    }
+
+	/**
+	 * @param string $type
+	 * @param string $table
+	 * @param array $settings
+	 * - fields: array
+	 * - conditions: array
+	 * - joins: array[ [tableName, settings: array[conditions]] ]
+	 * - group: string
+	 * - having: array[conditions]
+	 * - order: array[field: direction]
+	 * - limit: string
+	 * - table_arrays: bool
+	 * - as_key: string | array[table, field]
+	 * @return array|bool
+	 */
+	public function find($type, $table, $settings = array())
+    {
+
         if ($type == 'first') {
             $settings['limit'] = 1;
         }
 
-        if (!empty($settings['limit'])) {
-            $q .= ' LIMIT ' . $settings['limit'];
-        }
+        $q = $this->buildSearchQueryFromSettings($table, $settings);
 
         $res = $this->execute($q);
 
         if (!empty($res)) {
             switch ($type) {
                 case 'first':
-
-                    if (!empty($settings['table_arrays'])) {
-                        $row = $res->fetch(PDO::FETCH_NUM);
-                        $map = $this->resultMap($res);
-                        $row = $this->mapResultRow($row, $map);
-                    } else {
-                        $row = $res->fetch(PDO::FETCH_ASSOC);
-                    }
-
-                    return $row;
-
-                    break;
-                case
-                'all':
-                    $data = array();
-
-                    if (!empty($settings['table_arrays'])) {
-                        $tempData = $res->fetchAll(PDO::FETCH_NUM);
-                        $map = $this->resultMap($res);
-                        foreach ($tempData as $row) {
-                            $result = $this->mapResultRow($row, $map);
-
-                            //as_key must have a structure like ['table' => table, 'field' => field]
-                            if (isset($settings['as_key']) && is_array($settings['as_key'])) {
-                                $data[$result[$settings['as_key'][0]][$settings['as_key'][1]]] = $result;
-                            } else {
-                                $data[] = $result;
-                            }
-                        }
-                    } else {
-                        //as_key must be a string
-                        if (isset($settings['as_key'])) {
-                            while (($row = $res->fetch(PDO::FETCH_ASSOC)) !== false) {
-                                $data[$row[$settings['as_key']]] = $row;
-                            }
-                        } else {
-                            $data = $res->fetchAll(PDO::FETCH_ASSOC);
-                        }
-                    }
-
-                    return $data;
-
-                    break;
+                    return $this->fetchSearchFirst($res);
+                case 'all':
+                    return $this->fetchSearchAll($res);
                 case 'list':
-                    $data = array();
-
-                    while (($row = $res->fetch(PDO::FETCH_ASSOC)) !== false) {
-                        $data[$row[$settings['fields'][0]]] = $row[$settings['fields'][1]];
-                    }
-
-                    return $data;
-
-                    break;
+                    return $this->fetchSearchList($res, $settings['fields']);
             }
         }
 
@@ -465,7 +488,6 @@ class ormPDOClass
 
 
 	/**
-	 *
 	 * @param string $table
 	 * @param array $data
 	 * @return mixed
@@ -507,7 +529,6 @@ class ormPDOClass
 	}
 
 	/**
-	 *
 	 * @param string $table
 	 * @param array $data
 	 * @param array $conditions
@@ -530,9 +551,7 @@ class ormPDOClass
 		$q .= implode(',', $fields);
 
 		if (!empty($conditions)) {
-
 			$q .= $this->buildConditions($conditions);
-
 		}
 
         $result = $this->execute($q);
@@ -546,7 +565,6 @@ class ormPDOClass
 
 
 	/**
-	 *
 	 * @param string $table
 	 * @param array $conditions
 	 * @return bool
@@ -556,9 +574,7 @@ class ormPDOClass
 		$q = 'DELETE FROM `' . $table . '`';
 
 		if (!empty($conditions)) {
-
 			$q .= $this->buildConditions($conditions);
-
 		}
 
         $result = $this->execute($q);
