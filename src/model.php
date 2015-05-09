@@ -10,40 +10,40 @@ class Model extends ormPDOClass{
 		$this->table = $table;
 
 		#pass connection by link
-		if(!empty($connection)){
+		if(!empty($connection)) {
 			$this->connection = &$connection;
-		}else{
+		} else{
 			parent::__construct($config);
 		}
 	}
 
-	public function find( $type, $settings, $set=null ){
-		if(!empty($set)){
+	public function find( $type, $settings, $set=null ) {
+		if(!empty($set)) {
 			$settings = $set;
 		}
 		return parent::find( $type, $this->table, $settings );
 	}
 
-	public function get($settings, $set=null){
-		if(!empty($set)){
+	public function get($settings, $set=null) {
+		if(!empty($set)) {
 			$settings = $set;
 		}
 		return parent::get($this->table, $settings);
 	}
 
-	public function exists($conditions, $idfield=null){
+	public function exists($conditions, $idfield=null) {
 		return parent::exists($this->table, $conditions, $idfield);
 	}
 
-	public function remove($conditions){
+	public function remove($conditions) {
 		return parent::remove($this->table, $conditions);
 	}
 
-	public function save($data){
+	public function save($data) {
 		return parent::save($this->table, $data);
 	}
 
-	public function update($data, $conditions){
+	public function update($data, $conditions) {
 		return parent::update($this->table, $data, $conditions);
 	}
 

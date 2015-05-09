@@ -67,7 +67,7 @@ class ormPDOClass
 	{
 		try {
 			$connectionString = 'mysql:';
-			if (!empty($this->config['socket'])){
+			if (!empty($this->config['socket'])) {
 				$connectionString .= 'unix_socket=' . $this->config['socket'] . ';';
 			}
 			$connectionString .= 'dbname=' . $this->config['base'] . ';host=' . $this->config['host'] . ';charset=' . $this->config['charset'];
@@ -81,7 +81,7 @@ class ormPDOClass
 		$this->connection = & $dbConnection;
 	}
 
-	public static function CONDITION_EXACT($condition){
+	public static function CONDITION_EXACT($condition) {
 		return '.'.$condition;
 	}
 
@@ -92,11 +92,11 @@ class ormPDOClass
 	private function prepare($value)
 	{
 
-		if( is_string($value) ){
+		if( is_string($value) ) {
 			$value = str_replace("'", '`', $value);
 			$value = addslashes(trim($value));
 		}
-		if(is_array($value)){
+		if(is_array($value)) {
 			$value = (string)$value;
 		}
 
@@ -145,18 +145,18 @@ class ormPDOClass
 	 * @param $condition_set
 	 * @return string
 	 */
-	private function process_conditions($condition_set){
+	private function process_conditions($condition_set) {
 		if (is_array($condition_set[2])) {
 			$condition_arr = array();
 			foreach ($condition_set[2] as $c) {
 				$condition_arr[] = (!empty($c) || $c === 0 || $c === '0') ? "'" . $c . "'" : 'NULL';
 			}
-			if($condition_set[1] == '='){
+			if($condition_set[1] == '=') {
 				$condition_set[1] = 'IN';
-			} elseif($condition_set[1] == '!=' || $condition_set[1] == '<>'){
+			} elseif($condition_set[1] == '!=' || $condition_set[1] == '<>') {
 				$condition_set[1] = 'NOT IN';
 			}
-			if(empty($condition_arr)){
+			if(empty($condition_arr)) {
                 $condition_arr = array('NULL');
             }
 			$result = $condition_set[0] . " " . $condition_set[1] . " (" . implode(',', $condition_arr) . ") ";
@@ -174,7 +174,7 @@ class ormPDOClass
 		} else {
             if (substr($condition_set[1], 0, 1) == '.') {
                 $condition_set[1] = substr($condition_set[1], 1, strlen($condition_set[1] - 1));
-            } elseif( !is_numeric($condition_set[2]) ){
+            } elseif( !is_numeric($condition_set[2]) ) {
                 $condition_set[2] = "'" . $condition_set[2] . "'";
             }
             $result = $condition_set[0] . " " . $condition_set[1] . " " . $condition_set[2] . " ";
@@ -222,7 +222,7 @@ class ormPDOClass
 		if (!empty($settings['joins'])) {
 			$join_sets = array();
 			foreach ($settings['joins'] as $join_set) {
-				if(is_array($join_set[0])){
+				if(is_array($join_set[0])) {
 					$tableName = '`'.$join_set[0][0] .'` as '.$join_set[0][1];
 				} else {
 					$tableName = "`$join_set[0]`";
@@ -367,9 +367,9 @@ class ormPDOClass
 
 	}
 
-    private function mapResultRow($row, $map){
+    private function mapResultRow($row, $map) {
         $result = [];
-        foreach($row as $fieldNum => $fieldValue){
+        foreach($row as $fieldNum => $fieldValue) {
             $mapForField = $map[$fieldNum];
             $result[ $mapForField['table'] ][ $mapForField['name'] ] = $fieldValue;
         }
@@ -414,7 +414,7 @@ class ormPDOClass
 				break;
 		}
 
-		if(!empty($withMap)){
+		if(!empty($withMap)) {
 			if( !empty($res) ) {
 				$map = $this->resultMap($res);
 				$ret = [
@@ -467,7 +467,7 @@ class ormPDOClass
 		if ($this->execute($q)) {
 			if (!$this->fictive) {
 				$last_id = $this->lastInsertId();
-				if(!empty($last_id)){
+				if(!empty($last_id)) {
 					return $last_id;
 				} else{
 					$av = array_values($data);
@@ -481,7 +481,7 @@ class ormPDOClass
 		}
 	}
 
-	public function lastInsertId(){
+	public function lastInsertId() {
 		return $this->connection->lastInsertId();
 	}
 
@@ -498,7 +498,7 @@ class ormPDOClass
 
 		$fields = array();
 		foreach ($data as $field => $value) {
-			if(substr($field, -2) == '=='){
+			if(substr($field, -2) == '==') {
 				$field = substr($field, 0, -2);
 				$fields[] = $field . ' = ' . $value;
 			} else{
@@ -516,7 +516,7 @@ class ormPDOClass
 
         $result = $this->execute($q);
 
-        if(!empty($result)){
+        if(!empty($result)) {
             return $result->rowCount();
         } else{
             return 0;
@@ -542,7 +542,7 @@ class ormPDOClass
 
         $result = $this->execute($q);
 
-        if(!empty($result)){
+        if(!empty($result)) {
             return $result->rowCount();
         } else{
             return 0;
@@ -637,7 +637,7 @@ class ormPDOClass
      * @param $sql string
      * @param $e \Exception|PDOException
      */
-    private function logExecutionError($sql, $e){
+    private function logExecutionError($sql, $e) {
         if ($this->debug) {
             print '<div>QUERY FAILED</div>."\r\n"';
             print '<div>' . $e->getMessage() . '</div>."\r\n"';
