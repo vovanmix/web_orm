@@ -1,6 +1,5 @@
 {
   "name": "vovanmix/web_orm",
-  "version": "1.0.1",
   "type": "library",
   "description": "simple lightweight ORM for MySQL written on PHP",
   "keywords": ["ORM","PHP", "database"],
@@ -21,9 +20,18 @@
     "phpunit/phpunit": "dev-master"
   },
   "autoload": {
-    "classmap": ["tests"],
     "psr-4": {
       "Vovanmix\\WebOrm\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Vovanmix\\WebOrm\\Tests\\": "tests/"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "master": "1.0.1"
     }
   },
   "minimum-stability": "dev"
