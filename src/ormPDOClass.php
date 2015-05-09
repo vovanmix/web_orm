@@ -303,19 +303,7 @@ class ormPDOClass
      * @return string
      */
     public static function buildJoins($joins){
-        $q= '';
-        if(!empty($joins) && is_array($joins)) {
-            $join_sets = array();
-            foreach ($joins as $join_set) {
-                $join_sets[] = self::buildJoinStatement($join_set);
-            }
-
-            if (!empty($join_sets)) {
-                $q .= ' ' . implode(' ', $join_sets);
-            }
-        }
-        
-        return $q;
+        return self::buildQueryWithMultipleStatements($joins, '', 'buildJoinStatement');
     }
 
     public static function buildHavingStatement($havingSet){
@@ -332,17 +320,27 @@ class ormPDOClass
      * @return string
      */
     public static function buildHaving($having){
-        $q = '';
-        if(!empty($having) && is_array($having)) {
-            $havingSets = array();
-            foreach ($having as $havingSet) {
+        return self::buildQueryWithMultipleStatements($having, 'HAVING', 'buildHavingStatement');
+    }
 
-                $havingSets[] = self::buildHavingStatement($havingSet);
+    /**
+     * @param mixed $settings
+     * @param string $operator
+     * @param callable $buildStatement
+     * @return string
+     */
+    public static function buildQueryWithMultipleStatements($settings, $operator, $buildStatement){
+        $q = '';
+        if(!empty($settings) && is_array($settings)) {
+            $statements = array();
+            foreach ($settings as $settingSet) {
+
+                $statements[] = self::$buildStatement($settingSet);
             }
 
-            $q .= ' HAVING ' . implode(', ', $havingSets);
+            $q .= ' ' . $operator . ' ' . implode(', ', $statements);
         }
-        
+
         return $q;
     }
 
@@ -359,17 +357,7 @@ class ormPDOClass
      * @return string
      */
     public static function buildOrder($order){
-        $q = '';
-        if(!empty($order) && is_array($order)) {
-            $order_sets = array();
-            foreach ($order as $order_set_k => $order_set_v) {
-                $order_sets[] = self::buildOrderStatement($order_set_k, $order_set_v);
-            }
-
-            $q .= ' ORDER BY ' . implode(', ', $order_sets);
-        }
-
-        return $q;
+        return self::buildQueryWithMultipleStatements($order, 'ORDER BY', 'buildOrderStatement');
     }
 
     public static function fillDefaultSettings($settings){
@@ -564,15 +552,9 @@ class ormPDOClass
     }
 
     private function staticQueryFirst($q, $fetchMethod){
-        $ret = false;
         $q .= ' LIMIT 1';
-        $res = $this->execute($q);
 
-        if (!empty($res)) {
-            $ret = $res->fetch($fetchMethod);
-        }
-
-        return $ret;
+        return $this->staticQueryAll($q, $fetchMethod);
     }
 
     private function staticQueryAll($q, $fetchMethod){
@@ -810,6 +792,10 @@ class ormPDOClass
         }
     }
 
+    public static function queryIsChangingData($sql){
+        return (strpos($sql, 'UPDATE ') !== false || strpos($sql, 'INSERT INTO ') !== false || strpos($sql, 'DELETE ') !== false);
+    }
+
 	/**
 	 * @param string $sql
 	 * @param array $params
@@ -824,7 +810,7 @@ class ormPDOClass
         $this->debug($sql);
 
 		if ($this->fictive) {
-			if (strpos($sql, 'UPDATE ') !== false || strpos($sql, 'INSERT INTO ') !== false || strpos($sql, 'DELETE ') !== false) {
+			if (self::queryIsChangingData($sql)) {
                 return NULL;
             }
 		}
