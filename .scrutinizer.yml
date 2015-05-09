@@ -17,12 +17,3 @@ application:
     environment:
         php:
             version: 5.4.28
-
-tools:
-    php_code_sniffer:
-        enabled: true
-        config:
-            standard: PSR4
-        filter:
-            paths:
-                - 'src/'
