@@ -166,7 +166,9 @@ class ormPDOClass
             } elseif ($condition_set[1] == '=') {
                 $result = "(" . $condition_set[0] . " IS NULL OR " . $condition_set[0] . " = '' OR " . $condition_set[0] . " = 0" . ")";
             } else{
-				if($condition_set[2] === '') $condition_set[2] = "''";
+				if($condition_set[2] === '') {
+                    $condition_set[2] = "''";
+                }
 				$result = "(" . $condition_set[0] . " " . $condition_set[1] . " " . $condition_set[2] . ")";
 			}
 		} else {
@@ -264,8 +266,9 @@ class ormPDOClass
 				if (substr($having_set[1], 0, 1) == '.') {
 					$having_set[1] = substr($having_set[1], 1, strlen($having_set[1] - 1));
 					$having_sets[] = $having_set[0] . " " . $having_set[1] . " " . $having_set[2] . " ";
-				} else
-					$having_sets[] = $having_set[0] . " " . $having_set[1] . " '" . $having_set[2] . "' ";
+				} else {
+                    $having_sets[] = $having_set[0] . " " . $having_set[1] . " '" . $having_set[2] . "' ";
+                }
 			}
 
 			$q .= ' HAVING ' . implode(', ', $having_sets);
@@ -330,8 +333,7 @@ class ormPDOClass
 								$data[] = $result;
 							}
 						}
-					}
-					else {
+					} else {
 						//as_key must be a string
 						if (isset($settings['as_key'])) {
 							while (($row = $res->fetch(PDO::FETCH_ASSOC)) !== false) {
@@ -386,7 +388,7 @@ class ormPDOClass
 
 		if(empty($withMap)) {
 			$fetchMethod = PDO::FETCH_ASSOC;
-		}else{
+		} else{
 			$fetchMethod = PDO::FETCH_NUM;
 		}
 
@@ -467,13 +469,11 @@ class ormPDOClass
 				$last_id = $this->lastInsertId();
 				if(!empty($last_id)){
 					return $last_id;
-				}
-				else{
+				} else{
 					$av = array_values($data);
 					return $av[0];
 				}
-			}
-			else{
+			} else{
 				return uniqid();
 			}
 		} else {
@@ -501,8 +501,7 @@ class ormPDOClass
 			if(substr($field, -2) == '=='){
 				$field = substr($field, 0, -2);
 				$fields[] = $field . ' = ' . $value;
-			}
-			else{
+			} else{
 				$fields[] = $field . ' = ' . $this->prepare($value);
 			}
 		}
@@ -519,8 +518,7 @@ class ormPDOClass
 
         if(!empty($result)){
             return $result->rowCount();
-        }
-        else{
+        } else{
             return 0;
         }
 	}
@@ -546,8 +544,7 @@ class ormPDOClass
 
         if(!empty($result)){
             return $result->rowCount();
-        }
-        else{
+        } else{
             return 0;
         }
 
@@ -720,8 +717,7 @@ class ormPDOClass
 	protected function camelize($lowerCaseAndUnderscoredWord)
 	{
 		if (!($result = self::_cache(__FUNCTION__, $lowerCaseAndUnderscoredWord))) {
-			$result = self::humanize($lowerCaseAndUnderscoredWord);
-            $result = str_replace(' ', '', $result);
+            $result = str_replace(' ', '', self::humanize($lowerCaseAndUnderscoredWord));
             self::_cache(__FUNCTION__, $lowerCaseAndUnderscoredWord, $result);
 		}
 		return $result;
