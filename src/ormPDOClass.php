@@ -58,6 +58,12 @@ class ormPDOClass
 		if (empty($this->config['host'])) {
             $this->config['host'] = 'localhost';
         }
+        if (empty($this->config['user'])) {
+            $this->config['user'] = 'root';
+        }
+        if (!isset($this->config['password'])) {
+            $this->config['password'] = 'root';
+        }
 
 		$this->connect();
 		$this->execute("SET NAMES '" . $this->config['charset'] . "'");
@@ -66,6 +72,16 @@ class ormPDOClass
 	private function connect()
 	{
 		try {
+            if(empty($this->config['base'])){
+                throw new \Exception('Base name is not specified');
+            }
+            if(empty($this->config['host'])){
+                throw new \Exception('Host name is not specified');
+            }
+            if(empty($this->config['user'])){
+                throw new \Exception('User is not specified');
+            }
+
 			$connectionString = 'mysql:';
 			if (!empty($this->config['socket'])) {
 				$connectionString .= 'unix_socket=' . $this->config['socket'] . ';';
@@ -764,6 +780,8 @@ class ormPDOClass
 
 		return call_user_func_array(array($this, $applicableMethod), $params);
 	}
+
+    public static $_cache;
 
     /**
      * @param mixed $type

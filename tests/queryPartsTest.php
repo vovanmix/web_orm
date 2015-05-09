@@ -9,7 +9,7 @@ class queryPartsTest extends \PHPUnit_Framework_TestCase
 
     public function testBuildFields()
     {
-        $ORM = new ormPDOClass([]);
+//        $ORM = new ormPDOClass([]);
 
 //        $stack = array();
 //        $this->assertEquals(0, count($stack));
