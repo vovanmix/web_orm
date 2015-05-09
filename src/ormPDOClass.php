@@ -280,20 +280,18 @@ class ormPDOClass
     }
 
     /**
-     * @param array $settings
+     * @param array $joins
      * @return string
      */
-    public static function buildJoins($settings){
+    public static function buildJoins($joins){
         $q= '';
-        if(!empty($settings['joins'])) {
-            $join_sets = array();
-            foreach ($settings['joins'] as $join_set) {
-                $join_sets[] = self::buildJoinStatement($join_set);
-            }
+        $join_sets = array();
+        foreach ($joins as $join_set) {
+            $join_sets[] = self::buildJoinStatement($join_set);
+        }
 
-            if (!empty($join_sets)) {
-                $q .= ' ' . implode(' ', $join_sets);
-            }
+        if (!empty($join_sets)) {
+            $q .= ' ' . implode(' ', $join_sets);
         }
         
         return $q;
@@ -349,39 +347,51 @@ class ormPDOClass
         return $q;
     }
 
+    public static function fillDefaultSettings($settings){
+
+        $defaultSettings = [
+            'fields' => NULL,
+            'joins' => NULL,
+            'conditions' => NULL,
+            'group' => NULL,
+            'having' => NULL,
+            'order' => NULL,
+            'limit' => NULL,
+        ];
+
+        return array_replace($defaultSettings, $settings);
+    }
+
+    public static function buildGroup($group){
+        return ' GROUP BY ' . $group;
+    }
+
     /**
      * @param string $table
      * @param array $settings
      * @return string
      */
     public static function buildSearchQuery($table, $settings){
+
+        $settings = self::fillDefaultSettings($settings);
+
         $q = 'SELECT ';
 
-        $q .= self::buildFields(!empty($settings['fields']) ? $settings['fields'] : NULL);
+        $q .= self::buildFields($settings['fields']);
 
         $q .= ' FROM `' . $table . '`';
 
-        $q .= self::buildJoins($settings);
+        $q .= self::buildJoins($settings['joins']);
 
-        if (!empty($settings['conditions'])) {
-            $q .= self::buildConditionSet($settings['conditions']);
-        }
+        $q .= self::buildConditionSet($settings['conditions']);
 
-        if (!empty($settings['group'])) {
-            $q .= ' GROUP BY ' . $settings['group'];
-        }
+        $q .= self::buildGroup($settings['group']);
 
-        if (!empty($settings['having'])) {
-            $q .= self::buildHaving($settings['having']);
-        }
+        $q .= self::buildHaving($settings['having']);
 
-        if (!empty($settings['order'])) {
-            $q .= self::buildOrder($settings['order']);
-        }
+        $q .= self::buildOrder($settings['order']);
 
-        if (!empty($settings['limit'])) {
-            $q .= ' LIMIT ' . $settings['limit'];
-        }
+        $q .= ' LIMIT ' . $settings['limit'];
 
         return $q;
     }

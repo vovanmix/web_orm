@@ -9,6 +9,46 @@ use Vovanmix\WebOrm\ormPDOClass;
 class queryPartsTest extends \PHPUnit_Framework_TestCase
 {
 
+    public function testFillDefaultSettings(){
+
+        $ORM = new ormPDOClass(NULL, true);
+
+        $val = $ORM::fillDefaultSettings(['fields' => [
+            'name',
+            'last' => 'LastName',
+            'CONCAT(street, zip)' => 'address'
+        ]]);
+        $expectedVal = [
+            'fields' => [
+                'name',
+                'last' => 'LastName',
+                'CONCAT(street, zip)' => 'address'
+            ],
+            'joins' => NULL,
+            'conditions' => NULL,
+            'group' => NULL,
+            'having' => NULL,
+            'order' => NULL,
+            'limit' => NULL,
+        ];
+        $this->assertEquals($expectedVal, $val);
+
+
+        $val = $ORM::fillDefaultSettings([]);
+        $expectedVal = [
+            'fields' => NULL,
+            'joins' => NULL,
+            'conditions' => NULL,
+            'group' => NULL,
+            'having' => NULL,
+            'order' => NULL,
+            'limit' => NULL,
+        ];
+        $this->assertEquals($expectedVal, $val);
+
+
+    }
+
     public function testBuildFields()
     {
         $ORM = new ormPDOClass(NULL, true);
