@@ -21,11 +21,11 @@
   },
   "autoload": {
     "psr-4": {
-      "Vovanmix\\WebOrm\\": "src/",
-      "Vovanmix\\WebOrm\\Tests\\": "tests/"
-    },
-    "psr-0": {
-      "Vovanmix\\WebOrm\\": "src/",
+      "Vovanmix\\WebOrm\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
       "Vovanmix\\WebOrm\\Tests\\": "tests/"
     }
   },
@@ -33,6 +33,5 @@
     "branch-alias": {
       "dev-master": "1.0.1"
     }
-  },
-  "minimum-stability": "dev"
+  }
 }

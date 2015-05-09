@@ -2,6 +2,8 @@
 
 namespace Vovanmix\WebOrm\Tests;
 
+require __DIR__.'/../vendor/autoload.php';
+
 use Vovanmix\WebOrm\ormPDOClass;
 
 class miscTest extends \PHPUnit_Framework_TestCase
