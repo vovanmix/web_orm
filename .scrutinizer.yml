@@ -1,0 +1,11 @@
+filter:
+    excluded_paths: [tests/*]
+build:
+    tests:
+        override:
+            -
+                command: 'phpunit tests'
+application:
+    environment:
+        php:
+            version: 5.3.0
