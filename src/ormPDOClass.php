@@ -143,7 +143,7 @@ class ormPDOClass
 	 * @param string $operation
 	 * @return string
 	 */
-    public static function buildConditions($conditions, $is_sub_condition = false, $operation = 'AND')
+    public static function buildConditionSet($conditions, $is_sub_condition = false, $operation = 'AND')
 	{
 		$q = '';
 		$condition_sets = array();
@@ -158,9 +158,9 @@ class ormPDOClass
 
 			#there is array of subsets
 			if ((isset($condition_set[0]) && is_array($condition_set[0])) || (!isset($condition_set[0]))) {
-				$condition_sets[] = ' (' . self::buildConditions($condition_set, true, $sub_operation) . ') ';
+				$condition_sets[] = ' (' . self::buildConditionSet($condition_set, true, $sub_operation) . ') ';
 			} else {
-				$condition_sets[] = self::processConditions($condition_set);
+				$condition_sets[] = self::buildCondition($condition_set);
 			}
 		}
 		if (!empty($condition_sets)) {
@@ -173,46 +173,72 @@ class ormPDOClass
 		return $q;
 	}
 
+    public static function buildConditionArray($condition_set){
+        $condition_arr = array();
+        foreach ($condition_set[2] as $c) {
+            $condition_arr[] = (!empty($c) || $c === 0 || $c === '0') ? "'" . $c . "'" : 'NULL';
+        }
+        if($condition_set[1] == '=') {
+            $condition_set[1] = 'IN';
+        } elseif($condition_set[1] == '!=' || $condition_set[1] == '<>') {
+            $condition_set[1] = 'NOT IN';
+        }
+        if(empty($condition_arr)) {
+            $condition_arr = array('NULL');
+        }
+        $result = $condition_set[0] . " " . $condition_set[1] . " (" . implode(',', $condition_arr) . ") ";
+
+        return $result;
+    }
+
+    public static function buildConditionEmpty($condition_set){
+        if ($condition_set[1] == 'NOT' || $condition_set[1] == '!=' || $condition_set[1] == '<>') {
+            $result = "(" . $condition_set[0] . " IS NOT NULL OR " . $condition_set[0] . " != '' OR " . $condition_set[0] . " != 0" . ")";
+        } elseif ($condition_set[1] == '=') {
+            $result = "(" . $condition_set[0] . " IS NULL OR " . $condition_set[0] . " = '' OR " . $condition_set[0] . " = 0" . ")";
+        } else{
+            if($condition_set[2] === '') {
+                $condition_set[2] = "''";
+            }
+            $result = "(" . $condition_set[0] . " " . $condition_set[1] . " " . $condition_set[2] . ")";
+        }
+
+        return $result;
+    }
+
+    public static function buildConditionSimple($condition_set){
+        if (substr($condition_set[1], 0, 1) == '.') {
+            $condition_set[1] = substr($condition_set[1], 1, strlen($condition_set[1] - 1));
+        } elseif( !is_numeric($condition_set[2]) ) {
+            $condition_set[2] = "'" . $condition_set[2] . "'";
+        }
+        $result = $condition_set[0] . " " . $condition_set[1] . " " . $condition_set[2] . " ";
+
+        return $result;
+    }
+
 	/**
 	 * @param array $condition_set
 	 * @return string
 	 */
-    public static function processConditions($condition_set) {
+    public static function buildCondition($condition_set) {
 		if (is_array($condition_set[2])) {
-			$condition_arr = array();
-			foreach ($condition_set[2] as $c) {
-				$condition_arr[] = (!empty($c) || $c === 0 || $c === '0') ? "'" . $c . "'" : 'NULL';
-			}
-			if($condition_set[1] == '=') {
-				$condition_set[1] = 'IN';
-			} elseif($condition_set[1] == '!=' || $condition_set[1] == '<>') {
-				$condition_set[1] = 'NOT IN';
-			}
-			if(empty($condition_arr)) {
-                $condition_arr = array('NULL');
-            }
-			$result = $condition_set[0] . " " . $condition_set[1] . " (" . implode(',', $condition_arr) . ") ";
+            $result = self::buildConditionArray($condition_set);
 		} elseif (empty($condition_set[2])) {
-			if ($condition_set[1] == 'NOT' || $condition_set[1] == '!=' || $condition_set[1] == '<>') {
-                $result = "(" . $condition_set[0] . " IS NOT NULL OR " . $condition_set[0] . " != '' OR " . $condition_set[0] . " != 0" . ")";
-            } elseif ($condition_set[1] == '=') {
-                $result = "(" . $condition_set[0] . " IS NULL OR " . $condition_set[0] . " = '' OR " . $condition_set[0] . " = 0" . ")";
-            } else{
-				if($condition_set[2] === '') {
-                    $condition_set[2] = "''";
-                }
-				$result = "(" . $condition_set[0] . " " . $condition_set[1] . " " . $condition_set[2] . ")";
-			}
+            $result = self::buildConditionEmpty($condition_set);
 		} else {
-            if (substr($condition_set[1], 0, 1) == '.') {
-                $condition_set[1] = substr($condition_set[1], 1, strlen($condition_set[1] - 1));
-            } elseif( !is_numeric($condition_set[2]) ) {
-                $condition_set[2] = "'" . $condition_set[2] . "'";
-            }
-            $result = $condition_set[0] . " " . $condition_set[1] . " " . $condition_set[2] . " ";
+            $result = self::buildConditionSimple($condition_set);
 		}
 		return $result;
 	}
+
+    public static function buildFieldStatement($field_key, $field_name){
+        if ((int)$field_key !== $field_key) {
+            return $field_key . ' as ' . $field_name;
+        } else {
+            return $field_name;
+        }
+    }
 
     /**
      * @param array $fields
@@ -225,17 +251,32 @@ class ormPDOClass
         
         if (!empty($fields)) {
             foreach ($fields as $field_key => $field_name) {
-                if ((int)$field_key !== $field_key) {
-                    $fieldsArray[] = $field_key . ' as ' . $field_name;
-                } else {
-                    $fieldsArray[] = $field_name;
-                }
+                $fieldsArray[] = self::buildFieldStatement($field_key, $field_name);
             }
             $q .= implode(',', $fieldsArray);
         } else {
             $q .= '*';
         }
         return $q;
+    }
+
+    public static function buildJoinStatement($join_set){
+        if(is_array($join_set[0])) {
+            $tableName = '`'.$join_set[0][0] .'` as '.$join_set[0][1];
+        } else {
+            $tableName = "`$join_set[0]`";
+        }
+        $join_statement = 'LEFT JOIN ' . $tableName;
+        $on_sets = array();
+        foreach ($join_set[1] as $on_set) {
+            $on_sets[] = self::buildCondition($on_set);
+        }
+
+        if (!empty($on_sets)) {
+            $join_statement .= ' ON ' . implode(' AND ', $on_sets);
+        }
+
+        return $join_statement;
     }
 
     /**
@@ -246,22 +287,7 @@ class ormPDOClass
         $q= '';
         $join_sets = array();
         foreach ($joins as $join_set) {
-            if(is_array($join_set[0])) {
-                $tableName = '`'.$join_set[0][0] .'` as '.$join_set[0][1];
-            } else {
-                $tableName = "`$join_set[0]`";
-            }
-            $join_statement = 'LEFT JOIN ' . $tableName;
-            $on_sets = array();
-            foreach ($join_set[1] as $on_set) {
-                $on_sets[] = self::processConditions($on_set);
-            }
-
-            if (!empty($on_sets)) {
-                $join_statement .= ' ON ' . implode(' AND ', $on_sets);
-            }
-
-            $join_sets[] = $join_statement;
+            $join_sets[] = self::buildJoinStatement($join_set);
         }
 
         if (!empty($join_sets)) {
@@ -269,6 +295,15 @@ class ormPDOClass
         }
         
         return $q;
+    }
+
+    public static function buildHavingStatement($havingSet){
+        if (substr($havingSet[1], 0, 1) == '.') {
+            $havingSet[1] = substr($havingSet[1], 1, strlen($havingSet[1] - 1));
+            return $havingSet[0] . " " . $havingSet[1] . " " . $havingSet[2] . " ";
+        } else {
+            return $havingSet[0] . " " . $havingSet[1] . " '" . $havingSet[2] . "' ";
+        }
     }
 
     /**
@@ -280,17 +315,20 @@ class ormPDOClass
         $havingSets = array();
         foreach ($having as $havingSet) {
 
-            if (substr($havingSet[1], 0, 1) == '.') {
-                $havingSet[1] = substr($havingSet[1], 1, strlen($havingSet[1] - 1));
-                $havingSets[] = $havingSet[0] . " " . $havingSet[1] . " " . $havingSet[2] . " ";
-            } else {
-                $havingSets[] = $havingSet[0] . " " . $havingSet[1] . " '" . $havingSet[2] . "' ";
-            }
+            $havingSets[] = self::buildHavingStatement($havingSet);
         }
 
         $q .= ' HAVING ' . implode(', ', $havingSets);
         
         return $q;
+    }
+
+    public static function buildOrderStatement($order_set_k, $order_set_v){
+        if (!is_int($order_set_k)) {
+            return $order_set_k . ' ' . $order_set_v;
+        } else {
+            return $order_set_v;
+        }
     }
 
     /**
@@ -301,12 +339,7 @@ class ormPDOClass
         $q = '';
         $order_sets = array();
         foreach ($order as $order_set_k => $order_set_v) {
-
-            if (!is_int($order_set_k)) {
-                $order_sets[] = $order_set_k . ' ' . $order_set_v;
-            } else {
-                $order_sets[] = $order_set_v;
-            }
+            $order_sets[] = self::buildOrderStatement($order_set_k, $order_set_v);
         }
 
         $q .= ' ORDER BY ' . implode(', ', $order_sets);
@@ -331,7 +364,7 @@ class ormPDOClass
         }
 
         if (!empty($settings['conditions'])) {
-            $q .= self::buildConditions($settings['conditions']);
+            $q .= self::buildConditionSet($settings['conditions']);
         }
 
         if (!empty($settings['group'])) {
@@ -605,7 +638,7 @@ class ormPDOClass
         $q .= implode(',', $fields);
 
         if (!empty($conditions)) {
-            $q .= self::buildConditions($conditions);
+            $q .= self::buildConditionSet($conditions);
         }
         
         return $q;
@@ -638,7 +671,7 @@ class ormPDOClass
         $q = 'DELETE FROM `' . $table . '`';
 
         if (!empty($conditions)) {
-            $q .= self::buildConditions($conditions);
+            $q .= self::buildConditionSet($conditions);
         }
 
         return $q;
