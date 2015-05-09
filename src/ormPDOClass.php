@@ -289,7 +289,7 @@ class ormPDOClass
      * @param array $settings
      * @return string
      */
-    private function buildSearchQueryFromSettings($table, $settings){
+    private function buildSearchQuery($table, $settings){
         $q = 'SELECT ';
 
         if (!empty($settings['fields'])) {
@@ -414,7 +414,7 @@ class ormPDOClass
             $settings['limit'] = 1;
         }
 
-        $q = $this->buildSearchQueryFromSettings($table, $settings);
+        $q = $this->buildSearchQuery($table, $settings);
 
         $res = $this->execute($q);
 
@@ -509,6 +509,26 @@ class ormPDOClass
 		return $columns;
 	}
 
+    /**
+     * @param $table
+     * @param $data
+     * @return string
+     */
+    private function buildSaveQuery($table, $data){
+        $q = 'INSERT INTO `' . $table .'`';
+
+        $fields = array();
+        $values = array();
+        foreach ($data as $field => $value) {
+            $fields[] = $field;
+            $values[] = $this->prepare($value);
+        }
+
+        $q .= ' (' . implode(',', $fields) . ')';
+        $q .= ' VALUES (' . implode(',', $values) . ')';
+
+        return $q;
+    }
 
 	/**
 	 * @param string $table
@@ -518,17 +538,7 @@ class ormPDOClass
 	public function save($table, $data)
 	{
 
-		$q = 'INSERT INTO `' . $table .'`';
-
-		$fields = array();
-		$values = array();
-		foreach ($data as $field => $value) {
-			$fields[] = $field;
-			$values[] = $this->prepare($value);
-		}
-
-		$q .= ' (' . implode(',', $fields) . ')';
-		$q .= ' VALUES (' . implode(',', $values) . ')';
+		$q = $this->buildSaveQuery($table, $data);
 
 		if ($this->execute($q)) {
 			if (!$this->fictive) {
@@ -550,6 +560,28 @@ class ormPDOClass
 	public function lastInsertId() {
 		return $this->connection->lastInsertId();
 	}
+    
+    private function buildUpdateQuery($table, $data, $conditions){
+        $q = 'UPDATE `' . $table . '` SET ';
+
+        $fields = array();
+        foreach ($data as $field => $value) {
+            if(substr($field, -2) == '==') {
+                $field = substr($field, 0, -2);
+                $fields[] = $field . ' = ' . $value;
+            } else{
+                $fields[] = $field . ' = ' . $this->prepare($value);
+            }
+        }
+
+        $q .= implode(',', $fields);
+
+        if (!empty($conditions)) {
+            $q .= $this->buildConditions($conditions);
+        }
+        
+        return $q;
+    }
 
 	/**
 	 * @param string $table
@@ -559,23 +591,7 @@ class ormPDOClass
 	 */
 	public function update($table, $data, $conditions = array())
 	{
-		$q = 'UPDATE `' . $table . '` SET ';
-
-		$fields = array();
-		foreach ($data as $field => $value) {
-			if(substr($field, -2) == '==') {
-				$field = substr($field, 0, -2);
-				$fields[] = $field . ' = ' . $value;
-			} else{
-				$fields[] = $field . ' = ' . $this->prepare($value);
-			}
-		}
-
-		$q .= implode(',', $fields);
-
-		if (!empty($conditions)) {
-			$q .= $this->buildConditions($conditions);
-		}
+		$q = $this->buildUpdateQuery($table, $data, $conditions);
 
         $result = $this->execute($q);
 
@@ -586,6 +602,15 @@ class ormPDOClass
         }
 	}
 
+    private function buildRemoveQuery($table, $conditions){
+        $q = 'DELETE FROM `' . $table . '`';
+
+        if (!empty($conditions)) {
+            $q .= $this->buildConditions($conditions);
+        }
+
+        return $q;
+    }
 
 	/**
 	 * @param string $table
@@ -594,11 +619,7 @@ class ormPDOClass
 	 */
 	public function remove($table, $conditions = array())
 	{
-		$q = 'DELETE FROM `' . $table . '`';
-
-		if (!empty($conditions)) {
-			$q .= $this->buildConditions($conditions);
-		}
+		$q = $this->buildRemoveQuery($table, $conditions);
 
         $result = $this->execute($q);
 
@@ -609,7 +630,6 @@ class ormPDOClass
         }
 
 	}
-
 
 	/**
 	 * @param string $table
