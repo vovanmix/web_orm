@@ -70,6 +70,10 @@ class ormPDOClass
 
     public static function fillDefaultConfig($config){
 
+        if(empty($config)){
+            $config = [];
+        }
+
         $defaultConfig = [
             'charset' => 'utf8',
             'host' => 'localhost',
