@@ -52,11 +52,12 @@ class ormPDOClass
 	{
 		$this->config = $config;
 
-		if (empty($this->config['charset']))
-			$this->config['charset'] = 'utf8';
-
-		if (empty($this->config['host']))
-			$this->config['host'] = 'localhost';
+		if (empty($this->config['charset'])) {
+            $this->config['charset'] = 'utf8';
+        }
+		if (empty($this->config['host'])) {
+            $this->config['host'] = 'localhost';
+        }
 
 		$this->connect();
 		$this->execute("SET NAMES '" . $this->config['charset'] . "'");
@@ -152,26 +153,26 @@ class ormPDOClass
 			}
 			if($condition_set[1] == '='){
 				$condition_set[1] = 'IN';
-			}
-			elseif($condition_set[1] == '!=' || $condition_set[1] == '<>'){
+			} elseif($condition_set[1] == '!=' || $condition_set[1] == '<>'){
 				$condition_set[1] = 'NOT IN';
 			}
-			if(empty($condition_arr)) $condition_arr = array('NULL');
+			if(empty($condition_arr)){
+                $condition_arr = array('NULL');
+            }
 			$result = $condition_set[0] . " " . $condition_set[1] . " (" . implode(',', $condition_arr) . ") ";
 		} elseif (empty($condition_set[2])) {
-			if ($condition_set[1] == 'NOT' || $condition_set[1] == '!=' || $condition_set[1] == '<>')
-				$result = "(" . $condition_set[0] . " IS NOT NULL OR " . $condition_set[0] . " != '' OR " . $condition_set[0] . " != 0" . ")";
-			elseif ($condition_set[1] == '=')
-				$result = "(" . $condition_set[0] . " IS NULL OR " . $condition_set[0] . " = '' OR " . $condition_set[0] . " = 0" . ")";
-			else{
+			if ($condition_set[1] == 'NOT' || $condition_set[1] == '!=' || $condition_set[1] == '<>') {
+                $result = "(" . $condition_set[0] . " IS NOT NULL OR " . $condition_set[0] . " != '' OR " . $condition_set[0] . " != 0" . ")";
+            } elseif ($condition_set[1] == '=') {
+                $result = "(" . $condition_set[0] . " IS NULL OR " . $condition_set[0] . " = '' OR " . $condition_set[0] . " = 0" . ")";
+            } else{
 				if($condition_set[2] === '') $condition_set[2] = "''";
 				$result = "(" . $condition_set[0] . " " . $condition_set[1] . " " . $condition_set[2] . ")";
 			}
 		} else {
             if (substr($condition_set[1], 0, 1) == '.') {
                 $condition_set[1] = substr($condition_set[1], 1, strlen($condition_set[1] - 1));
-            }
-            elseif( !is_numeric($condition_set[2]) ){
+            } elseif( !is_numeric($condition_set[2]) ){
                 $condition_set[2] = "'" . $condition_set[2] . "'";
             }
             $result = $condition_set[0] . " " . $condition_set[1] . " " . $condition_set[2] . " ";
@@ -606,12 +607,15 @@ class ormPDOClass
 		}
 
 		if ($this->fictive) {
-			if (strpos($sql, 'UPDATE ') !== false)
-				return NULL;
-			if (strpos($sql, 'INSERT INTO ') !== false)
-				return NULL;
-			if (strpos($sql, 'DELETE ') !== false)
-				return NULL;
+			if (strpos($sql, 'UPDATE ') !== false) {
+                return NULL;
+            }
+			if (strpos($sql, 'INSERT INTO ') !== false) {
+                return NULL;
+            }
+			if (strpos($sql, 'DELETE ') !== false) {
+                return NULL;
+            }
 		}
 
 		try {
@@ -716,8 +720,9 @@ class ormPDOClass
 	protected function camelize($lowerCaseAndUnderscoredWord)
 	{
 		if (!($result = self::_cache(__FUNCTION__, $lowerCaseAndUnderscoredWord))) {
-			$result = str_replace(' ', '', self::humanize($lowerCaseAndUnderscoredWord));
-			self::_cache(__FUNCTION__, $lowerCaseAndUnderscoredWord, $result);
+			$result = self::humanize($lowerCaseAndUnderscoredWord);
+            $result = str_replace(' ', '', $result);
+            self::_cache(__FUNCTION__, $lowerCaseAndUnderscoredWord, $result);
 		}
 		return $result;
 	}
