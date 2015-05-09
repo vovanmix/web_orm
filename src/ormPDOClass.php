@@ -196,7 +196,6 @@ class ormPDOClass
 	 */
 	public function find($type, $table, $settings = array())
 	{
-		$affectedTables = [];
 
 		$q = 'SELECT ';
 
@@ -216,17 +215,14 @@ class ormPDOClass
 		}
 
 		$q .= ' FROM `' . $table . '`';
-		$affectedTables[] = $table;
 
 		if (!empty($settings['joins'])) {
 			$join_sets = array();
 			foreach ($settings['joins'] as $join_set) {
 				if(is_array($join_set[0])){
 					$tableName = '`'.$join_set[0][0] .'` as '.$join_set[0][1];
-					$affectedTables[] = $join_set[0][0];
 				} else {
 					$tableName = "`$join_set[0]`";
-					$affectedTables[] = $join_set[0];
 				}
 				$join_statement = ' LEFT JOIN ' . $tableName;
 				$on_sets = array();
@@ -299,7 +295,7 @@ class ormPDOClass
 			case 'first':
 
 				$q .= ' LIMIT 1';
-				$res = $this->execute($q, 'select', $affectedTables);
+				$res = $this->execute($q);
 
 				if (!empty($res)) {
 					if (!empty($settings['table_arrays'])) {
@@ -314,7 +310,7 @@ class ormPDOClass
 				}
 				break;
 			case 'all':
-				$res = $this->execute($q, 'select', $affectedTables);
+				$res = $this->execute($q);
 
 				if (!empty($res)) {
 					$data = array();
@@ -349,7 +345,7 @@ class ormPDOClass
 				}
 				break;
 			case 'list':
-				$res = $this->execute($q, 'select', $affectedTables);
+				$res = $this->execute($q);
 
 				if (!empty($res)) {
 					$data = array();
@@ -465,7 +461,7 @@ class ormPDOClass
 		$q .= ' (' . implode(',', $fields) . ')';
 		$q .= ' VALUES (' . implode(',', $values) . ')';
 
-		if ($this->execute($q, 'insert', $table)) {
+		if ($this->execute($q)) {
 			if (!$this->fictive) {
 				$last_id = $this->lastInsertId();
 				if(!empty($last_id)){
@@ -518,7 +514,7 @@ class ormPDOClass
 
 		}
 
-        $result = $this->execute($q, 'update', $table);
+        $result = $this->execute($q);
 
         if(!empty($result)){
             return $result->rowCount();
@@ -545,7 +541,7 @@ class ormPDOClass
 
 		}
 
-        $result = $this->execute($q, 'delete', $table);
+        $result = $this->execute($q);
 
         if(!empty($result)){
             return $result->rowCount();
@@ -598,12 +594,10 @@ class ormPDOClass
 
 	/**
 	 * @param string $sql
-	 * @param string $operation
-	 * @param array|string $tables
 	 * @param array $params
 	 * @return PDOStatement
 	 */
-	private function execute($sql, $operation=null, $tables=null, $params = array())
+	private function execute($sql, $params = array())
 	{
 
 		if ($this->debug) {
