@@ -24,25 +24,25 @@ class queryPartsTest extends \PHPUnit_Framework_TestCase
                 'last' => 'LastName',
                 'CONCAT(street, zip)' => 'address'
             ],
-            'joins' => NULL,
-            'conditions' => NULL,
-            'group' => NULL,
-            'having' => NULL,
-            'order' => NULL,
-            'limit' => NULL,
+            'joins' => [],
+            'conditions' => [],
+            'group' => '',
+            'having' => [],
+            'order' => [],
+            'limit' => '',
         ];
         $this->assertEquals($expectedVal, $val);
 
 
         $val = $ORM::fillDefaultSettings([]);
         $expectedVal = [
-            'fields' => NULL,
-            'joins' => NULL,
-            'conditions' => NULL,
-            'group' => NULL,
-            'having' => NULL,
-            'order' => NULL,
-            'limit' => NULL,
+            'fields' => [],
+            'joins' => [],
+            'conditions' => [],
+            'group' => '',
+            'having' => [],
+            'order' => [],
+            'limit' => '',
         ];
         $this->assertEquals($expectedVal, $val);
 
@@ -65,6 +65,10 @@ class queryPartsTest extends \PHPUnit_Framework_TestCase
         $sql2 = $ORM::buildFields(NULL);
         $expectedSql = '*';
         $this->assertEquals($expectedSql, $sql2);
+
+        $sql = $ORM::buildFields([]);
+        $expectedSql = '*';
+        $this->assertEquals($expectedSql, $sql);
     }
 
     public function testBuildJoins()
@@ -80,6 +84,10 @@ class queryPartsTest extends \PHPUnit_Framework_TestCase
             ]
         ]);
         $expectedSql = ' LEFT JOIN `users` ON users.city = 1  AND parent = parent.id ';
+        $this->assertEquals($expectedSql, $sql);
+
+        $sql = $ORM::buildJoins([]);
+        $expectedSql = '';
         $this->assertEquals($expectedSql, $sql);
     }
 

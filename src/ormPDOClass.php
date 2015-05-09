@@ -337,12 +337,14 @@ class ormPDOClass
      */
     public static function buildOrder($order){
         $q = '';
-        $order_sets = array();
-        foreach ($order as $order_set_k => $order_set_v) {
-            $order_sets[] = self::buildOrderStatement($order_set_k, $order_set_v);
-        }
+        if(!empty($order)) {
+            $order_sets = array();
+            foreach ($order as $order_set_k => $order_set_v) {
+                $order_sets[] = self::buildOrderStatement($order_set_k, $order_set_v);
+            }
 
-        $q .= ' ORDER BY ' . implode(', ', $order_sets);
+            $q .= ' ORDER BY ' . implode(', ', $order_sets);
+        }
 
         return $q;
     }
@@ -350,20 +352,40 @@ class ormPDOClass
     public static function fillDefaultSettings($settings){
 
         $defaultSettings = [
-            'fields' => NULL,
-            'joins' => NULL,
-            'conditions' => NULL,
-            'group' => NULL,
-            'having' => NULL,
-            'order' => NULL,
-            'limit' => NULL,
+            'fields' => [],
+            'joins' => [],
+            'conditions' => [],
+            'group' => '',
+            'having' => [],
+            'order' => [],
+            'limit' => '',
         ];
 
         return array_replace($defaultSettings, $settings);
     }
 
+    /**
+     * @param string $group
+     * @return string
+     */
     public static function buildGroup($group){
-        return ' GROUP BY ' . $group;
+        $q = '';
+        if(!empty($group)) {
+            $q .= ' GROUP BY ' . $group;
+        }
+        return $q;
+    }
+
+    /**
+     * @param string $limit
+     * @return string
+     */
+    public static function buildLimit($limit){
+        $q = '';
+        if(!empty($limit)) {
+            $q .= ' LIMIT ' . $limit;
+        }
+        return $q;
     }
 
     /**
@@ -391,7 +413,7 @@ class ormPDOClass
 
         $q .= self::buildOrder($settings['order']);
 
-        $q .= ' LIMIT ' . $settings['limit'];
+        $q .= self::buildLimit($settings['limit']);
 
         return $q;
     }
