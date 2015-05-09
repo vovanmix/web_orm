@@ -1,5 +1,10 @@
 <?php
-class queryBuildTest extends PHPUnit_Framework_TestCase
+
+namespace Vovanmix\WebOrm\Tests;
+
+use Vovanmix\WebOrm\ormPDOClass;
+
+class queryBuildTest extends \PHPUnit_Framework_TestCase
 {
 
 

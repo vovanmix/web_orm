@@ -4,7 +4,7 @@ namespace Vovanmix\WebOrm\Tests;
 
 use Vovanmix\WebOrm\ormPDOClass;
 
-class queryPartsTest extends PHPUnit_Framework_TestCase
+class queryPartsTest extends \PHPUnit_Framework_TestCase
 {
 
     public function testBuildFields()

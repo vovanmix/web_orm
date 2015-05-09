@@ -4,7 +4,7 @@ namespace Vovanmix\WebOrm\Tests;
 
 use Vovanmix\WebOrm\ormPDOClass;
 
-class miscTest extends PHPUnit_Framework_TestCase
+class miscTest extends \PHPUnit_Framework_TestCase
 {
 
     public function testCamelize()
