@@ -376,13 +376,13 @@ class ormPDOClass
     }
 
     /**
-     * @param string $group
+     * @param mixed $group
      * @return string
      */
     public static function buildGroup($group){
         $q = '';
         if(!empty($group)) {
-            $q .= ' GROUP BY ' . $group;
+            $q .= ' GROUP BY ' . (string)$group;
         }
         return $q;
     }
@@ -446,7 +446,7 @@ class ormPDOClass
         return $row;
     }
 
-    private function setMappedRow(&$data, $row, $map){
+    private function setMappedRow(&$data, $row, $map, $settings){
         $result = self::mapResultRow($row, $map);
 
         //as_key must have a structure like ['table' => table, 'field' => field]
@@ -469,7 +469,7 @@ class ormPDOClass
             $tempData = $res->fetchAll(PDO::FETCH_NUM);
             $map = self::resultMap($res);
             foreach ($tempData as $row) {
-                $this->setMappedRow($data, $row, $map);
+                $this->setMappedRow($data, $row, $map, $settings);
             }
         } else {
             //as_key must be a string
@@ -551,19 +551,21 @@ class ormPDOClass
         return $result;
     }
 
-    private function staticQueryFirst($q, $fetchMethod){
+    private function staticQueryFirst($q, $fetchMethod, $withMap){
         $q .= ' LIMIT 1';
 
-        return $this->staticQueryAll($q, $fetchMethod);
+        return $this->staticQueryAll($q, $fetchMethod, $withMap);
     }
 
-    private function staticQueryAll($q, $fetchMethod){
+    private function staticQueryAll($q, $fetchMethod, $withMap){
         $ret = false;
         $res = $this->execute($q);
 
         if (!empty($res)) {
             $ret = $res->fetchAll($fetchMethod);
         }
+
+        $ret = $this->staticWithMap($ret, $res, $withMap);
 
         return $ret;
     }
@@ -575,6 +577,17 @@ class ormPDOClass
             $fetchMethod = PDO::FETCH_NUM;
         }
         return $fetchMethod;
+    }
+
+    private function staticWithMap($ret, $res, $withMap){
+        if(!empty($withMap) && !empty($res) ) {
+            $map = self::resultMap($res);
+            $ret = [
+                'data' => $res,
+                'map' => $map
+            ];
+        }
+        return $ret;
     }
 
 	/**
@@ -591,22 +604,14 @@ class ormPDOClass
 
 		switch ($type) {
 			case 'first':
-                $ret = $this->staticQueryFirst($q, $fetchMethod);
+                $ret = $this->staticQueryFirst($q, $fetchMethod, $withMap);
 				break;
 			case 'all':
-				$ret = $this->staticQueryAll($q, $fetchMethod);
+				$ret = $this->staticQueryAll($q, $fetchMethod, $withMap);
 				break;
 			case 'execute':
-				$this->execute($q);
+                $ret = $this->execute($q);
 				break;
-		}
-
-		if(!empty($withMap) && !empty($res) ) {
-            $map = self::resultMap($res);
-            $ret = [
-                'data' => $ret,
-                'map' => $map
-            ];
 		}
 
 		return $ret;
