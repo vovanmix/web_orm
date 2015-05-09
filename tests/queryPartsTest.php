@@ -83,7 +83,7 @@ class queryPartsTest extends \PHPUnit_Framework_TestCase
                 ]
             ]
         ]);
-        $expectedSql = ' LEFT JOIN `users` ON users.city = 1  AND parent = parent.id ';
+        $expectedSql = '  LEFT JOIN `users` ON users.city = 1  AND parent = parent.id ';
         $this->assertEquals($expectedSql, $sql);
 
         $sql = $ORM::buildJoins([]);
