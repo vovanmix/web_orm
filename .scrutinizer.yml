@@ -1,5 +1,13 @@
 filter:
-    excluded_paths: [tests/*]
+    paths:
+        - 'src/*'
+    excluded_paths:
+        - 'vendor/*'
+        - 'tests/*'
+
+before_commands:
+    - 'composer install --no-interaction --no-scripts'
+
 build:
     tests:
         override:
@@ -9,3 +17,12 @@ application:
     environment:
         php:
             version: 5.4.28
+
+tools:
+    php_code_sniffer:
+        enabled: true
+        config:
+            standard: PSR4
+        filter:
+            paths:
+                - 'src/'
