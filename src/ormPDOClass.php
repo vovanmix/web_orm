@@ -58,6 +58,9 @@ class ormPDOClass
 	{
 		$this->config = $config;
         $this->testing = $testing;
+        if($this->testing){
+            $this->fictive = true;
+        }
 
 		if (empty($this->config['charset'])) {
             $this->config['charset'] = 'utf8';
