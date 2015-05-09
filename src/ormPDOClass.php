@@ -518,7 +518,14 @@ class ormPDOClass
 
 		}
 
-		return $this->execute($q, 'update', $table)->rowCount();
+        $result = $this->execute($q, 'update', $table);
+
+        if(!empty($result)){
+            return $result->rowCount();
+        }
+        else{
+            return 0;
+        }
 	}
 
 
@@ -538,12 +545,19 @@ class ormPDOClass
 
 		}
 
-		return $this->execute($q, 'delete', $table)->rowCount();
+        $result = $this->execute($q, 'delete', $table);
+
+        if(!empty($result)){
+            return $result->rowCount();
+        }
+        else{
+            return 0;
+        }
+
 	}
 
 
 	/**
-	 *
 	 * @param string $table
 	 * @param array $conditions
 	 * @param string $idField
@@ -566,10 +580,9 @@ class ormPDOClass
 	}
 
 	/**
-	 *
 	 * @param string $table
 	 * @param array $conditions
-	 * @return mixed
+	 * @return integer
 	 */
 	public function count($table, $conditions = array())
 	{
@@ -580,7 +593,7 @@ class ormPDOClass
 		}
 
 		#if nothing were returned
-		return false;
+		return 0;
 	}
 
 	/**
@@ -588,7 +601,7 @@ class ormPDOClass
 	 * @param string $operation
 	 * @param array|string $tables
 	 * @param array $params
-	 * @return PDOStatement|bool
+	 * @return PDOStatement
 	 */
 	private function execute($sql, $operation=null, $tables=null, $params = array())
 	{
@@ -600,25 +613,25 @@ class ormPDOClass
 
 		if ($this->fictive) {
 			if (strpos($sql, 'UPDATE ') !== false)
-				return true;
+				return NULL;
 			if (strpos($sql, 'INSERT INTO ') !== false)
-				return true;
+				return NULL;
 			if (strpos($sql, 'DELETE ') !== false)
-				return true;
+				return NULL;
 		}
 
 		try {
 			$sth = $this->connection->prepare($sql);
 		} catch (PDOException $e) {
 			$this->logExecutionError($sql, $e);
-			return false;
+			return NULL;
 		}
 
 		try {
 			$sth->execute($params);
 		} catch (PDOException $e) {
             $this->logExecutionError($sql, $e);
-			return false;
+			return NULL;
 		}
 
 		return $sth;
