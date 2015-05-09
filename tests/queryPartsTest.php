@@ -2,6 +2,8 @@
 
 namespace Vovanmix\WebOrm\Tests;
 
+require_once( __DIR__.'/../vendor/autoload.php' );
+
 use Vovanmix\WebOrm\ormPDOClass;
 
 class queryPartsTest extends \PHPUnit_Framework_TestCase
@@ -9,7 +11,7 @@ class queryPartsTest extends \PHPUnit_Framework_TestCase
 
     public function testBuildFields()
     {
-        $ORM = new ormPDOClass(['base' => 'test']);
+        $ORM = new ormPDOClass(NULL, true);
 
         $sql = $ORM::buildFields([
             'name',
@@ -27,7 +29,7 @@ class queryPartsTest extends \PHPUnit_Framework_TestCase
 
     public function testBuildJoins()
     {
-        $ORM = new ormPDOClass(['base' => 'test']);
+        $ORM = new ormPDOClass(NULL, true);
 
         $sql = $ORM::buildJoins([
             [
@@ -56,7 +58,7 @@ class queryPartsTest extends \PHPUnit_Framework_TestCase
     }
 
     public function testPrepare(){
-        $ORM = new ormPDOClass(['base' => 'test']);
+        $ORM = new ormPDOClass(NULL, true);
 
         $val = $ORM::prepare(" 'MyName' is hello ");
         $expectedVal = "'`MyName` is hello'";

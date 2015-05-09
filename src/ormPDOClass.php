@@ -47,10 +47,17 @@ class ormPDOClass
 	public $debug = false;
 	public $print_errors = true;
 	public $fictive = false;
+    public $testing = false;
 
-	public function __construct($config)
+    /**
+     * @param $config
+     * @param bool $testing
+     * @throws \Exception
+     */
+	public function __construct($config, $testing=false)
 	{
 		$this->config = $config;
+        $this->testing = $testing;
 
 		if (empty($this->config['charset'])) {
             $this->config['charset'] = 'utf8';
@@ -69,8 +76,14 @@ class ormPDOClass
 		$this->execute("SET NAMES '" . $this->config['charset'] . "'");
 	}
 
+    /**
+     * @throws \Exception
+     */
 	private function connect()
 	{
+        if($this->testing){
+            return;
+        }
 		try {
             if(empty($this->config['base'])){
                 throw new \Exception('Base name is not specified');
@@ -686,6 +699,9 @@ class ormPDOClass
 	 */
 	private function execute($sql, $params = array())
 	{
+        if($this->testing){
+            return NULL;
+        }
 
 		if ($this->debug) {
 			print '<hr/>';
