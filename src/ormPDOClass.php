@@ -111,7 +111,7 @@ class ormPDOClass
 	 * @param string $operation
 	 * @return string
 	 */
-	private function build_conditions($conditions, $is_sub_condition = false, $operation = 'AND')
+	private function buildConditions($conditions, $is_sub_condition = false, $operation = 'AND')
 	{
 		$q = '';
 		$condition_sets = array();
@@ -126,7 +126,7 @@ class ormPDOClass
 
 			#there is array of subsets
 			if ((isset($condition_set[0]) && is_array($condition_set[0])) || (!isset($condition_set[0]))) {
-				$condition_sets[] = ' (' . $this->build_conditions($condition_set, true, $sub_operation) . ') ';
+				$condition_sets[] = ' (' . $this->buildConditions($condition_set, true, $sub_operation) . ') ';
 			} else {
 				$condition_sets[] = $this->process_conditions($condition_set);
 			}
@@ -182,6 +182,92 @@ class ormPDOClass
 		return $result;
 	}
 
+    private function buildFields($fields){
+
+        $q = '';
+        $fieldsArray = array();
+        
+        if (!empty($fields)) {
+            foreach ($fields as $field_key => $field_name) {
+                if ((int)$field_key !== $field_key) {
+                    $fieldsArray[] = $field_key . ' as ' . $field_name;
+                } else {
+                    $fieldsArray[] = $field_name;
+                }
+            }
+            $q .= implode(',', $fieldsArray);
+        } else {
+            $q .= ' * ';
+        }
+        return $q;
+    }
+    
+    private function buildJoins($joins){
+        $q= '';
+        if (!empty($joins)) {
+            $join_sets = array();
+            foreach ($joins as $join_set) {
+                if(is_array($join_set[0])) {
+                    $tableName = '`'.$join_set[0][0] .'` as '.$join_set[0][1];
+                } else {
+                    $tableName = "`$join_set[0]`";
+                }
+                $join_statement = ' LEFT JOIN ' . $tableName;
+                $on_sets = array();
+                foreach ($join_set[1] as $on_set) {
+                    $on_sets[] = $this->process_conditions($on_set);
+                }
+
+                if (!empty($on_sets)) {
+                    $join_statement .= ' ON ' . implode(' AND ', $on_sets);
+                }
+
+                $join_sets[] = $join_statement;
+            }
+
+            if (!empty($join_sets)) {
+                $q .= ' ' . implode(' ', $join_sets);
+            }
+        }
+        
+        return $q;
+    }
+    
+    private function buildHaving($having){
+        $q = '';
+        $havingSets = array();
+        foreach ($having as $havingSet) {
+
+            if (substr($havingSet[1], 0, 1) == '.') {
+                $havingSet[1] = substr($havingSet[1], 1, strlen($havingSet[1] - 1));
+                $havingSets[] = $havingSet[0] . " " . $havingSet[1] . " " . $havingSet[2] . " ";
+            } else {
+                $havingSets[] = $havingSet[0] . " " . $havingSet[1] . " '" . $havingSet[2] . "' ";
+            }
+        }
+
+        $q .= ' HAVING ' . implode(', ', $havingSets);
+        
+        return $q;
+    }
+
+    private function buildOrder($order){
+        $q = '';
+        $order_sets = array();
+        foreach ($order as $order_set_k => $order_set_v) {
+
+            if (!is_int($order_set_k)) {
+                $order_sets[] = $order_set_k . ' ' . $order_set_v;
+            } else {
+                $order_sets[] = $order_set_v;
+            }
+        }
+
+        $q .= ' ORDER BY ' . implode(', ', $order_sets);
+
+        return $q;
+    }
+    
 	/**
 	 * @param string $type
 	 * @param string $table
@@ -198,169 +284,104 @@ class ormPDOClass
 	 * @return array|bool
 	 */
 	public function find($type, $table, $settings = array())
-	{
+    {
 
-		$q = 'SELECT ';
+        $q = 'SELECT ';
 
-		$fields = array();
+        if (!empty($settings['fields'])) {
+            $q .= $this->buildFields($settings['fields']);
+        }
 
-		if (!empty($settings['fields'])) {
-			foreach ($settings['fields'] as $field_key => $field_name) {
-				if ((int)$field_key !== $field_key) {
-					$fields[] = $field_key . ' as ' . $field_name;
-				} else {
-					$fields[] = $field_name;
-				}
-			}
-			$q .= implode(',', $fields);
-		} else {
-			$q .= ' * ';
-		}
+        $q .= ' FROM `' . $table . '`';
 
-		$q .= ' FROM `' . $table . '`';
+        if (!empty($settings['joins'])) {
+            $q .= $this->buildJoins($settings['joins']);
+        }
 
-		if (!empty($settings['joins'])) {
-			$join_sets = array();
-			foreach ($settings['joins'] as $join_set) {
-				if(is_array($join_set[0])) {
-					$tableName = '`'.$join_set[0][0] .'` as '.$join_set[0][1];
-				} else {
-					$tableName = "`$join_set[0]`";
-				}
-				$join_statement = ' LEFT JOIN ' . $tableName;
-				$on_sets = array();
-				foreach ($join_set[1] as $on_set) {
-					$on_sets[] = $this->process_conditions($on_set);
-				}
+        if (!empty($settings['conditions'])) {
+            $q .= $this->buildConditions($settings['conditions']);
+        }
 
-				if (!empty($on_sets)) {
-					$join_statement .= ' ON ' . implode(' AND ', $on_sets);
-				}
+        if (!empty($settings['group'])) {
+            $q .= ' GROUP BY ' . $settings['group'];
+        }
 
-				$join_sets[] = $join_statement;
-			}
+        if (!empty($settings['having'])) {
+            $q .= $this->buildHaving($settings['having']);
+        }
 
-			if (!empty($join_sets)) {
-				$q .= ' ' . implode(' ', $join_sets);
-			}
-		}
+        if (!empty($settings['order'])) {
+            $q .= $this->buildOrder($settings['order']);
+        }
 
+        if ($type == 'first') {
+            $settings['limit'] = 1;
+        }
 
-		if (!empty($settings['conditions'])) {
+        if (!empty($settings['limit'])) {
+            $q .= ' LIMIT ' . $settings['limit'];
+        }
 
-			$q .= $this->build_conditions($settings['conditions']);
+        $res = $this->execute($q);
 
-		}
+        if (!empty($res)) {
+            switch ($type) {
+                case 'first':
 
-
-		if (!empty($settings['group'])) {
-			$q .= ' GROUP BY ' . $settings['group'];
-		}
-
-
-		if (!empty($settings['having'])) {
-
-			$having_sets = array();
-			foreach ($settings['having'] as $having_set) {
-
-				if (substr($having_set[1], 0, 1) == '.') {
-					$having_set[1] = substr($having_set[1], 1, strlen($having_set[1] - 1));
-					$having_sets[] = $having_set[0] . " " . $having_set[1] . " " . $having_set[2] . " ";
-				} else {
-                    $having_sets[] = $having_set[0] . " " . $having_set[1] . " '" . $having_set[2] . "' ";
-                }
-			}
-
-			$q .= ' HAVING ' . implode(', ', $having_sets);
-		}
-
-		if (!empty($settings['order'])) {
-
-			$order_sets = array();
-			foreach ($settings['order'] as $order_set_k => $order_set_v) {
-
-				if (!is_int($order_set_k)) {
-					$order_sets[] = $order_set_k . ' ' . $order_set_v;
-				} else {
-					$order_sets[] = $order_set_v;
-				}
-			}
-
-			$q .= ' ORDER BY ' . implode(', ', $order_sets);
-		}
-
-
-		if (!empty($settings['limit'])) {
-			$q .= ' LIMIT ' . $settings['limit'];
-		}
-
-
-		switch ($type) {
-			case 'first':
-
-				$q .= ' LIMIT 1';
-				$res = $this->execute($q);
-
-				if (!empty($res)) {
-					if (!empty($settings['table_arrays'])) {
-						$row = $res->fetch(PDO::FETCH_NUM);
-						$map = $this->resultMap($res);
+                    if (!empty($settings['table_arrays'])) {
+                        $row = $res->fetch(PDO::FETCH_NUM);
+                        $map = $this->resultMap($res);
                         $row = $this->mapResultRow($row, $map);
-					} else{
-						$row = $res->fetch(PDO::FETCH_ASSOC);
-					}
+                    } else {
+                        $row = $res->fetch(PDO::FETCH_ASSOC);
+                    }
 
-					return $row;
-				}
-				break;
-			case 'all':
-				$res = $this->execute($q);
+                    return $row;
 
-				if (!empty($res)) {
-					$data = array();
+                    break;
+                case
+                'all':
+                    $data = array();
 
-					if (!empty($settings['table_arrays'])) {
-						$tempData = $res->fetchAll(PDO::FETCH_NUM);
-						$map = $this->resultMap($res);
-						$data = [];
-						foreach($tempData as $row) {
+                    if (!empty($settings['table_arrays'])) {
+                        $tempData = $res->fetchAll(PDO::FETCH_NUM);
+                        $map = $this->resultMap($res);
+                        foreach ($tempData as $row) {
                             $result = $this->mapResultRow($row, $map);
 
-							//as_key must have a structure like ['table' => table, 'field' => field]
-							if (isset($settings['as_key']) && is_array($settings['as_key'])) {
-								$data[ $result[$settings['as_key'][0]][$settings['as_key'][1]] ] = $result;
-							} else {
-								$data[] = $result;
-							}
-						}
-					} else {
-						//as_key must be a string
-						if (isset($settings['as_key'])) {
-							while (($row = $res->fetch(PDO::FETCH_ASSOC)) !== false) {
-								$data[$row[$settings['as_key']]] = $row;
-							}
-						} else {
-							$data = $res->fetchAll(PDO::FETCH_ASSOC);
-						}
-					}
+                            //as_key must have a structure like ['table' => table, 'field' => field]
+                            if (isset($settings['as_key']) && is_array($settings['as_key'])) {
+                                $data[$result[$settings['as_key'][0]][$settings['as_key'][1]]] = $result;
+                            } else {
+                                $data[] = $result;
+                            }
+                        }
+                    } else {
+                        //as_key must be a string
+                        if (isset($settings['as_key'])) {
+                            while (($row = $res->fetch(PDO::FETCH_ASSOC)) !== false) {
+                                $data[$row[$settings['as_key']]] = $row;
+                            }
+                        } else {
+                            $data = $res->fetchAll(PDO::FETCH_ASSOC);
+                        }
+                    }
 
-					return $data;
-				}
-				break;
-			case 'list':
-				$res = $this->execute($q);
+                    return $data;
 
-				if (!empty($res)) {
-					$data = array();
+                    break;
+                case 'list':
+                    $data = array();
 
-					while (($row = $res->fetch(PDO::FETCH_ASSOC)) !== false) {
-						$data[$row[$settings['fields'][0]]] = $row[$settings['fields'][1]];
-					}
+                    while (($row = $res->fetch(PDO::FETCH_ASSOC)) !== false) {
+                        $data[$row[$settings['fields'][0]]] = $row[$settings['fields'][1]];
+                    }
 
-					return $data;
-				}
-				break;
-		}
+                    return $data;
+
+                    break;
+            }
+        }
 
 		#if nothing were returned
 		return false;
@@ -510,7 +531,7 @@ class ormPDOClass
 
 		if (!empty($conditions)) {
 
-			$q .= $this->build_conditions($conditions);
+			$q .= $this->buildConditions($conditions);
 
 		}
 
@@ -536,7 +557,7 @@ class ormPDOClass
 
 		if (!empty($conditions)) {
 
-			$q .= $this->build_conditions($conditions);
+			$q .= $this->buildConditions($conditions);
 
 		}
 
