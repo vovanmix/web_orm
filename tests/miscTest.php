@@ -29,4 +29,6 @@ class miscTest extends \PHPUnit_Framework_TestCase
         $result = $ORM::underscore('HelloWorld');
         $this->assertEquals('hello_world', $result);
     }
+
+    //buildConnectionString
 }

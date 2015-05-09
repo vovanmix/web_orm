@@ -62,22 +62,45 @@ class ormPDOClass
             $this->fictive = true;
         }
 
-		if (empty($this->config['charset'])) {
-            $this->config['charset'] = 'utf8';
-        }
-		if (empty($this->config['host'])) {
-            $this->config['host'] = 'localhost';
-        }
-        if (empty($this->config['user'])) {
-            $this->config['user'] = 'root';
-        }
-        if (!isset($this->config['password'])) {
-            $this->config['password'] = 'root';
-        }
+        $this->config = self::fillDefaultConfig($config);
 
 		$this->connect();
 		$this->execute("SET NAMES '" . $this->config['charset'] . "'");
 	}
+
+    public static function fillDefaultConfig($config){
+
+        $defaultConfig = [
+            'charset' => 'utf8',
+            'host' => 'localhost',
+            'user' => 'root',
+            'password' => 'root',
+        ];
+
+        return array_replace($defaultConfig, $config);
+    }
+
+    private function checkConnectionData(){
+        if(empty($this->config['base'])){
+            throw new \Exception('Base name is not specified');
+        }
+        if(empty($this->config['host'])){
+            throw new \Exception('Host name is not specified');
+        }
+        if(empty($this->config['user'])){
+            throw new \Exception('User is not specified');
+        }
+    }
+
+    public static function buildConnectionString($config){
+        $connectionString = 'mysql:';
+        if (!empty($config['socket'])) {
+            $connectionString .= 'unix_socket=' . $config['socket'] . ';';
+        }
+        $connectionString .= 'dbname=' . $config['base'] . ';host=' . $config['host'] . ';charset=' . $config['charset'];
+
+        return $connectionString;
+    }
 
     /**
      * @throws \Exception
@@ -88,22 +111,11 @@ class ormPDOClass
             return;
         }
 		try {
-            if(empty($this->config['base'])){
-                throw new \Exception('Base name is not specified');
-            }
-            if(empty($this->config['host'])){
-                throw new \Exception('Host name is not specified');
-            }
-            if(empty($this->config['user'])){
-                throw new \Exception('User is not specified');
-            }
+            $this->checkConnectionData();
 
-			$connectionString = 'mysql:';
-			if (!empty($this->config['socket'])) {
-				$connectionString .= 'unix_socket=' . $this->config['socket'] . ';';
-			}
-			$connectionString .= 'dbname=' . $this->config['base'] . ';host=' . $this->config['host'] . ';charset=' . $this->config['charset'];
-			$dbConnection = new PDO($connectionString, $this->config['user'], $this->config['password']);
+            $connectionString = self::buildConnectionString($this->config);
+
+            $dbConnection = new PDO($connectionString, $this->config['user'], $this->config['password']);
 			$dbConnection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 			$dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		} catch (PDOException $e) {
@@ -143,7 +155,7 @@ class ormPDOClass
 	 * @param string $operation
 	 * @return string
 	 */
-    public static function buildConditionSet($conditions, $is_sub_condition = false, $operation = 'AND')
+    public static function buildConditions($conditions, $is_sub_condition = false, $operation = 'AND')
 	{
 		$q = '';
 		$condition_sets = array();
@@ -156,11 +168,10 @@ class ormPDOClass
 				$sub_operation = 'AND';
 			}
 
-			#there is array of subsets
-			if ((isset($condition_set[0]) && is_array($condition_set[0])) || (!isset($condition_set[0]))) {
-				$condition_sets[] = ' (' . self::buildConditionSet($condition_set, true, $sub_operation) . ') ';
+			if (self::conditionHasSubset($condition_set)) {
+				$condition_sets[] = ' (' . self::buildConditions($condition_set, true, $sub_operation) . ') ';
 			} else {
-				$condition_sets[] = self::buildCondition($condition_set);
+				$condition_sets[] = self::buildConditionStatement($condition_set);
 			}
 		}
 		if (!empty($condition_sets)) {
@@ -172,6 +183,10 @@ class ormPDOClass
 
 		return $q;
 	}
+
+    public static function conditionHasSubset($condition_set){
+        return ((isset($condition_set[0]) && is_array($condition_set[0])) || (!isset($condition_set[0])));
+    }
 
     public static function buildConditionArray($condition_set){
         $condition_arr = array();
@@ -221,7 +236,7 @@ class ormPDOClass
 	 * @param array $condition_set
 	 * @return string
 	 */
-    public static function buildCondition($condition_set) {
+    public static function buildConditionStatement($condition_set) {
 		if (is_array($condition_set[2])) {
             $result = self::buildConditionArray($condition_set);
 		} elseif (empty($condition_set[2])) {
@@ -241,7 +256,7 @@ class ormPDOClass
     }
 
     /**
-     * @param array $fields
+     * @param mixed $fields
      * @return string
      */
     public static function buildFields($fields){
@@ -249,7 +264,7 @@ class ormPDOClass
         $q = '';
         $fieldsArray = array();
         
-        if (!empty($fields)) {
+        if (!empty($fields) && is_array($fields)) {
             foreach ($fields as $field_key => $field_name) {
                 $fieldsArray[] = self::buildFieldStatement($field_key, $field_name);
             }
@@ -269,7 +284,7 @@ class ormPDOClass
         $join_statement = 'LEFT JOIN ' . $tableName;
         $on_sets = array();
         foreach ($join_set[1] as $on_set) {
-            $on_sets[] = self::buildCondition($on_set);
+            $on_sets[] = self::buildConditionStatement($on_set);
         }
 
         if (!empty($on_sets)) {
@@ -280,18 +295,20 @@ class ormPDOClass
     }
 
     /**
-     * @param array $joins
+     * @param mixed $joins
      * @return string
      */
     public static function buildJoins($joins){
         $q= '';
-        $join_sets = array();
-        foreach ($joins as $join_set) {
-            $join_sets[] = self::buildJoinStatement($join_set);
-        }
+        if(!empty($joins) && is_array($joins)) {
+            $join_sets = array();
+            foreach ($joins as $join_set) {
+                $join_sets[] = self::buildJoinStatement($join_set);
+            }
 
-        if (!empty($join_sets)) {
-            $q .= ' ' . implode(' ', $join_sets);
+            if (!empty($join_sets)) {
+                $q .= ' ' . implode(' ', $join_sets);
+            }
         }
         
         return $q;
@@ -307,18 +324,20 @@ class ormPDOClass
     }
 
     /**
-     * @param array $having
+     * @param mixed $having
      * @return string
      */
     public static function buildHaving($having){
         $q = '';
-        $havingSets = array();
-        foreach ($having as $havingSet) {
+        if(!empty($having) && is_array($having)) {
+            $havingSets = array();
+            foreach ($having as $havingSet) {
 
-            $havingSets[] = self::buildHavingStatement($havingSet);
+                $havingSets[] = self::buildHavingStatement($havingSet);
+            }
+
+            $q .= ' HAVING ' . implode(', ', $havingSets);
         }
-
-        $q .= ' HAVING ' . implode(', ', $havingSets);
         
         return $q;
     }
@@ -332,12 +351,12 @@ class ormPDOClass
     }
 
     /**
-     * @param array $order
+     * @param mixed $order
      * @return string
      */
     public static function buildOrder($order){
         $q = '';
-        if(!empty($order)) {
+        if(!empty($order) && is_array($order)) {
             $order_sets = array();
             foreach ($order as $order_set_k => $order_set_v) {
                 $order_sets[] = self::buildOrderStatement($order_set_k, $order_set_v);
@@ -377,7 +396,7 @@ class ormPDOClass
     }
 
     /**
-     * @param string $limit
+     * @param mixed $limit
      * @return string
      */
     public static function buildLimit($limit){
@@ -405,7 +424,7 @@ class ormPDOClass
 
         $q .= self::buildJoins($settings['joins']);
 
-        $q .= self::buildConditionSet($settings['conditions']);
+        $q .= self::buildConditions($settings['conditions']);
 
         $q .= self::buildGroup($settings['group']);
 
@@ -435,6 +454,17 @@ class ormPDOClass
         return $row;
     }
 
+    private function setMappedRow(&$data, $row, $map){
+        $result = self::mapResultRow($row, $map);
+
+        //as_key must have a structure like ['table' => table, 'field' => field]
+        if (isset($settings['as_key']) && is_array($settings['as_key'])) {
+            $data[$result[$settings['as_key'][0]][$settings['as_key'][1]]] = $result;
+        } else {
+            $data[] = $result;
+        }
+    }
+
     /**
      * @param PDOStatement $res
      * @param array $settings
@@ -447,14 +477,7 @@ class ormPDOClass
             $tempData = $res->fetchAll(PDO::FETCH_NUM);
             $map = self::resultMap($res);
             foreach ($tempData as $row) {
-                $result = self::mapResultRow($row, $map);
-
-                //as_key must have a structure like ['table' => table, 'field' => field]
-                if (isset($settings['as_key']) && is_array($settings['as_key'])) {
-                    $data[$result[$settings['as_key'][0]][$settings['as_key'][1]]] = $result;
-                } else {
-                    $data[] = $result;
-                }
+                $this->setMappedRow($data, $row, $map);
             }
         } else {
             //as_key must be a string
@@ -536,6 +559,38 @@ class ormPDOClass
         return $result;
     }
 
+    private function staticQueryFirst($q, $fetchMethod){
+        $ret = false;
+        $q .= ' LIMIT 1';
+        $res = $this->execute($q);
+
+        if (!empty($res)) {
+            $ret = $res->fetch($fetchMethod);
+        }
+
+        return $ret;
+    }
+
+    private function staticQueryAll($q, $fetchMethod){
+        $ret = false;
+        $res = $this->execute($q);
+
+        if (!empty($res)) {
+            $ret = $res->fetchAll($fetchMethod);
+        }
+
+        return $ret;
+    }
+    
+    private function staticQueryGetMethod($withMap){
+        if(empty($withMap)) {
+            $fetchMethod = PDO::FETCH_ASSOC;
+        } else{
+            $fetchMethod = PDO::FETCH_NUM;
+        }
+        return $fetchMethod;
+    }
+
 	/**
 	 * @param string $q
 	 * @param string $type
@@ -546,42 +601,26 @@ class ormPDOClass
 	{
 		$ret = false;
 
-		if(empty($withMap)) {
-			$fetchMethod = PDO::FETCH_ASSOC;
-		} else{
-			$fetchMethod = PDO::FETCH_NUM;
-		}
+        $fetchMethod = $this->staticQueryGetMethod($withMap);
 
 		switch ($type) {
 			case 'first':
-
-				$q .= ' LIMIT 1';
-				$res = $this->execute($q);
-
-				if (!empty($res)) {
-					$ret = $res->fetch($fetchMethod);
-				}
+                $ret = $this->staticQueryFirst($q, $fetchMethod);
 				break;
 			case 'all':
-				$res = $this->execute($q);
-
-				if (!empty($res)) {
-					$ret = $res->fetchAll($fetchMethod);
-				}
+				$ret = $this->staticQueryAll($q, $fetchMethod);
 				break;
 			case 'execute':
 				$this->execute($q);
 				break;
 		}
 
-		if(!empty($withMap)) {
-			if( !empty($res) ) {
-				$map = self::resultMap($res);
-				$ret = [
-					'data' => $ret,
-					'map' => $map
-				];
-			}
+		if(!empty($withMap) && !empty($res) ) {
+            $map = self::resultMap($res);
+            $ret = [
+                'data' => $ret,
+                'map' => $map
+            ];
 		}
 
 		return $ret;
@@ -670,7 +709,7 @@ class ormPDOClass
         $q .= implode(',', $fields);
 
         if (!empty($conditions)) {
-            $q .= self::buildConditionSet($conditions);
+            $q .= self::buildConditions($conditions);
         }
         
         return $q;
@@ -703,7 +742,7 @@ class ormPDOClass
         $q = 'DELETE FROM `' . $table . '`';
 
         if (!empty($conditions)) {
-            $q .= self::buildConditionSet($conditions);
+            $q .= self::buildConditions($conditions);
         }
 
         return $q;
@@ -760,6 +799,13 @@ class ormPDOClass
 		return 0;
 	}
 
+    private function debug($text){
+        if ($this->debug) {
+            print '<hr/>';
+            print $text . ";\r\n";
+        }
+    }
+
 	/**
 	 * @param string $sql
 	 * @param array $params
@@ -771,31 +817,16 @@ class ormPDOClass
             return NULL;
         }
 
-		if ($this->debug) {
-			print '<hr/>';
-			print $sql . ";\r\n";
-		}
+        $this->debug($sql);
 
 		if ($this->fictive) {
-			if (strpos($sql, 'UPDATE ') !== false) {
-                return NULL;
-            }
-			if (strpos($sql, 'INSERT INTO ') !== false) {
-                return NULL;
-            }
-			if (strpos($sql, 'DELETE ') !== false) {
+			if (strpos($sql, 'UPDATE ') !== false || strpos($sql, 'INSERT INTO ') !== false || strpos($sql, 'DELETE ') !== false) {
                 return NULL;
             }
 		}
 
 		try {
 			$sth = $this->connection->prepare($sql);
-		} catch (PDOException $e) {
-			$this->logExecutionError($sql, $e);
-			return NULL;
-		}
-
-		try {
 			$sth->execute($params);
 		} catch (PDOException $e) {
             $this->logExecutionError($sql, $e);
