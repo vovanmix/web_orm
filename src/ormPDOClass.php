@@ -6,6 +6,12 @@ use PDO;
 use PDOException;
 use PDOStatement;
 
+/**
+ * Class ormPDOClass
+ * @package Vovanmix\WebOrm
+ * @property PDO $connection
+ * @property StringHelper $stringHelper
+ */
 class ormPDOClass
 {
 
@@ -39,10 +45,9 @@ class ormPDOClass
 	const OP_NOT_EQUAL = '!=';
 
 	public $config;
-	/**
-	 * @var PDO $connection
-	 */
+
 	public $connection;
+    protected $stringHelper;
 
 	public $debug = false;
 	public $print_errors = true;
@@ -98,6 +103,10 @@ class ormPDOClass
         }
     }
 
+    /**
+     * @param array $config
+     * @return string
+     */
     public static function buildConnectionString($config){
         $connectionString = 'mysql:';
         if (!empty($config['socket'])) {
@@ -152,6 +161,12 @@ class ormPDOClass
         return $row;
     }
 
+    /**
+     * @param array $data
+     * @param array $row
+     * @param array $map
+     * @param array $settings
+     */
     private function setMappedRow(&$data, $row, $map, $settings){
         $result = self::mapResultRow($row, $map);
 
@@ -248,6 +263,11 @@ class ormPDOClass
 
 	}
 
+    /**
+     * @param mixed $row
+     * @param mixed $map
+     * @return array
+     */
     public static function mapResultRow($row, $map) {
         $result = [];
         foreach($row as $fieldNum => $fieldValue) {
@@ -257,12 +277,24 @@ class ormPDOClass
         return $result;
     }
 
+    /**
+     * @param string $q
+     * @param mixed $fetchMethod
+     * @param boolean $withMap
+     * @return array|bool
+     */
     private function staticQueryFirst($q, $fetchMethod, $withMap){
         $q .= ' LIMIT 1';
 
         return $this->staticQueryAll($q, $fetchMethod, $withMap);
     }
 
+    /**
+     * @param string $q
+     * @param mixed $fetchMethod
+     * @param boolean $withMap
+     * @return array|bool
+     */
     private function staticQueryAll($q, $fetchMethod, $withMap){
         $ret = false;
         $res = $this->execute($q);
@@ -275,7 +307,11 @@ class ormPDOClass
 
         return $ret;
     }
-    
+
+    /**
+     * @param boolean $withMap
+     * @return int
+     */
     private function staticQueryGetMethod($withMap){
         if(empty($withMap)) {
             $fetchMethod = PDO::FETCH_ASSOC;
@@ -285,6 +321,12 @@ class ormPDOClass
         return $fetchMethod;
     }
 
+    /**
+     * @param mixed $ret
+     * @param mixed $res
+     * @param mixed $withMap
+     * @return array
+     */
     private function staticWithMap($ret, $res, $withMap){
         if(!empty($withMap) && !empty($res) ) {
             $map = self::resultMap($res);
@@ -443,6 +485,9 @@ class ormPDOClass
 		return 0;
 	}
 
+    /**
+     * @param string $text
+     */
     private function debug($text){
         if ($this->debug) {
             print '<hr/>';
@@ -498,6 +543,11 @@ class ormPDOClass
         }
     }
 
+    /**
+     * @param string $table
+     * @param array $settings
+     * @return array|bool
+     */
 	public function get($table, $settings = array())
 	{
 		return $this->find('first', $table, $settings);
