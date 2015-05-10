@@ -4,8 +4,8 @@ This project is a simple lightweight ORM for MySQL written on PHP
 It works with PHP 5.3+ and MySQL with PDO_MYSQL for PHP enabled
 
 
-[![Build Status](https://scrutinizer-ci.com/g/vovanmix/web_orm/badges/build.png?b=master)]
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/vovanmix/web_orm/badges/quality-score.png?b=master)]
+[![Build Status](https://scrutinizer-ci.com/g/vovanmix/web_orm/badges/build.png?b=master)](https://scrutinizer-ci.com/g/vovanmix/web_orm/build-status/master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/vovanmix/web_orm/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/vovanmix/web_orm/?branch=master)
 
 
 ##Install
