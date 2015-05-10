@@ -4,16 +4,14 @@ namespace Vovanmix\WebOrm\Tests;
 
 require_once( __DIR__.'/../vendor/autoload.php' );
 
-use Vovanmix\WebOrm\ormPDOClass;
+use Vovanmix\WebOrm\QueryBuilder;
 
 class queryPartsTest extends \PHPUnit_Framework_TestCase
 {
 
     public function testFillDefaultSettings(){
 
-        $ORM = new ormPDOClass(NULL, true);
-
-        $val = $ORM::fillDefaultSettings(['fields' => [
+        $val = QueryBuilder::fillDefaultSettings(['fields' => [
             'name',
             'last' => 'LastName',
             'CONCAT(street, zip)' => 'address'
@@ -34,7 +32,7 @@ class queryPartsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expectedVal, $val);
 
 
-        $val = $ORM::fillDefaultSettings([]);
+        $val = QueryBuilder::fillDefaultSettings([]);
         $expectedVal = [
             'fields' => [],
             'joins' => [],
@@ -49,11 +47,9 @@ class queryPartsTest extends \PHPUnit_Framework_TestCase
 
     }
 
-    public function testBuildFields()
-    {
-        $ORM = new ormPDOClass(NULL, true);
+    public function testBuildFields(){
 
-        $sql = $ORM::buildFields([
+        $sql = QueryBuilder::buildFields([
             'name',
             'last' => 'LastName',
             'CONCAT(street, zip)' => 'address'
@@ -62,20 +58,18 @@ class queryPartsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expectedSql, $sql);
 
 
-        $sql2 = $ORM::buildFields(NULL);
+        $sql2 = QueryBuilder::buildFields(NULL);
         $expectedSql = '*';
         $this->assertEquals($expectedSql, $sql2);
 
-        $sql = $ORM::buildFields([]);
+        $sql = QueryBuilder::buildFields([]);
         $expectedSql = '*';
         $this->assertEquals($expectedSql, $sql);
     }
 
-    public function testBuildJoins()
-    {
-        $ORM = new ormPDOClass(NULL, true);
+    public function testBuildJoins(){
 
-        $sql = $ORM::buildJoins([
+        $sql = QueryBuilder::buildJoins([
             [
                 'users', [
                     ['users.city', '=', 1],
@@ -86,7 +80,7 @@ class queryPartsTest extends \PHPUnit_Framework_TestCase
         $expectedSql = '  LEFT JOIN `users` ON users.city = 1  AND parent = parent.id ';
         $this->assertEquals($expectedSql, $sql);
 
-        $sql = $ORM::buildJoins([]);
+        $sql = QueryBuilder::buildJoins([]);
         $expectedSql = '';
         $this->assertEquals($expectedSql, $sql);
     }
@@ -106,41 +100,40 @@ class queryPartsTest extends \PHPUnit_Framework_TestCase
     }
 
     public function testPrepare(){
-        $ORM = new ormPDOClass(NULL, true);
 
-        $val = $ORM::prepare(" 'MyName' is hello ");
+        $val = QueryBuilder::prepare(" 'MyName' is hello ");
         $expectedVal = "'`MyName` is hello'";
         $this->assertEquals($expectedVal, $val);
 
-        $val2 = $ORM::prepare(['hello']);
+        $val2 = QueryBuilder::prepare(['hello']);
         $expectedVal2 = "'hello'";
         $this->assertEquals($expectedVal2, $val2);
 
-        $val3 = $ORM::prepare(1);
+        $val3 = QueryBuilder::prepare(1);
         $expectedVal3 = "'1'";
         $this->assertEquals($expectedVal3, $val3);
 
-        $val = $ORM::prepare(0);
+        $val = QueryBuilder::prepare(0);
         $expectedVal = "0";
         $this->assertEquals($expectedVal, $val);
 
-        $val = $ORM::prepare('0');
+        $val = QueryBuilder::prepare('0');
         $expectedVal = "0";
         $this->assertEquals($expectedVal, $val);
 
-        $val = $ORM::prepare('');
+        $val = QueryBuilder::prepare('');
         $expectedVal = '""';
         $this->assertEquals($expectedVal, $val);
 
-        $val = $ORM::prepare(NULL);
+        $val = QueryBuilder::prepare(NULL);
         $expectedVal = 'NULL';
         $this->assertEquals($expectedVal, $val);
 
-        $val = $ORM::prepare(false);
+        $val = QueryBuilder::prepare(false);
         $expectedVal = 0;
         $this->assertEquals($expectedVal, $val);
 
-        $val = $ORM::prepare(true);
+        $val = QueryBuilder::prepare(true);
         $expectedVal = "'1'";
         $this->assertEquals($expectedVal, $val);
     }

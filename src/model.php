@@ -52,7 +52,7 @@ class Model extends ormPDOClass{
 
 		if (substr($method, 0, 5) == 'getBy') {
 			$applicableMethod = 'get';
-			$var = $this->underscore(substr($method, 5));
+			$var = $this->stringHelper->underscore(substr($method, 5));
 			$params = array(
 				array(
 					'conditions' => array(
@@ -62,7 +62,7 @@ class Model extends ormPDOClass{
 			);
 		} elseif (substr($method, 0, 6) == 'findBy') {
 			$applicableMethod = 'find';
-			$var = $this->underscore(substr($method, 6));
+			$var = $this->stringHelper->underscore(substr($method, 6));
 			$params = array(
 				'all',
 				array(

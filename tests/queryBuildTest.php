@@ -4,7 +4,7 @@ namespace Vovanmix\WebOrm\Tests;
 
 require_once( __DIR__.'/../vendor/autoload.php' );
 
-use Vovanmix\WebOrm\ormPDOClass;
+use Vovanmix\WebOrm\QueryBuilder;
 
 class queryBuildTest extends \PHPUnit_Framework_TestCase
 {
