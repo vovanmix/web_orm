@@ -216,9 +216,13 @@ class QueryBuilder{
      * @return string
      */
     public static function buildJoins($joins){
-        return self::buildQueryWithMultipleStatements($joins, '', 'buildJoinStatement');
+        return self::buildQueryWithMultipleStatements($joins, '', 'buildJoinStatement', '');
     }
 
+    /**
+     * @param array $havingSet
+     * @return string
+     */
     public static function buildHavingStatement($havingSet){
         if (substr($havingSet[1], 0, 1) == '.') {
             $havingSet[1] = substr($havingSet[1], 1, strlen($havingSet[1] - 1));
@@ -240,9 +244,10 @@ class QueryBuilder{
      * @param mixed $settings
      * @param string $operator
      * @param callable $buildStatement
+     * @param string $glue
      * @return string
      */
-    public static function buildQueryWithMultipleStatements($settings, $operator, $buildStatement){
+    public static function buildQueryWithMultipleStatements($settings, $operator, $buildStatement, $glue = ','){
         $q = '';
         if(!empty($settings) && is_array($settings)) {
             $statements = array();
@@ -251,7 +256,7 @@ class QueryBuilder{
                 $statements[] = self::$buildStatement($settingSet);
             }
 
-            $q .= ' ' . $operator . ' ' . implode(', ', $statements);
+            $q .= ' ' . $operator . ' ' . implode($glue.' ', $statements);
         }
 
         return $q;
